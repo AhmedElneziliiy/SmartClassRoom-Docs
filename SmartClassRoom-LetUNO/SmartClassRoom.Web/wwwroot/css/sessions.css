@@ -1,0 +1,192 @@
+/**
+ * Sessions CSS Styles
+ * Styles for the sessions management page
+ */
+
+/* Session Breakdown in Stat Card */
+.session-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.session-type-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.breakdown-item i {
+    font-size: 1rem;
+}
+
+/* Status Badges - Following color scheme */
+.status-badge-scheduled {
+    background-color: #cfe2ff;  /* Light Blue */
+    color: #084298;
+    border: 1px solid #b6d4fe;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.status-badge-inprogress {
+    background-color: #fff3cd;  /* Light Orange */
+    color: #664d03;
+    border: 1px solid #ffe69c;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.status-badge-completed {
+    background-color: #d4edda;  /* Light Green */
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.status-badge-cancelled {
+    background-color: #f8d7da;  /* Light Red */
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+/* Session Type Badges */
+.session-type-regular {
+    background-color: #e7f3ff;
+    color: #0056b3;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.session-type-makeup {
+    background-color: #fff5e6;
+    color: #cc6600;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.session-type-exam {
+    background-color: #ffe6e6;
+    color: #cc0000;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+/* Alert Boxes */
+.upcoming-sessions-alert {
+    border-left: 4px solid #0dcaf0;
+    background-color: #cff4fc;
+}
+
+.active-sessions-alert {
+    border-left: 4px solid #fd7e14;
+    background-color: #fff3cd;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.conflicts-alert {
+    border-left: 4px solid #dc3545;
+    background-color: #f8d7da;
+}
+
+/* Filter Section */
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+/* Sessions Table */
+.sessions-table {
+    font-size: 0.9rem;
+}
+
+.session-row {
+    transition: all 0.2s ease;
+}
+
+.session-row:hover {
+    background-color: #f8f9fa;
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.session-row.active-session {
+    background-color: #fff3cd;
+    border-left: 3px solid #fd7e14;
+}
+
+.session-row.upcoming-session {
+    background-color: #e7f3ff;
+}
+
+.session-date {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.attendance-indicator {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+/* Weekly Navigation */
+.btn-group .btn {
+    white-space: nowrap;
+}
+
+.btn-group .btn i {
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .sessions-table {
+        font-size: 0.8rem;
+    }
+
+    .btn-group {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .btn-group .btn {
+        width: 100%;
+        border-radius: 0.25rem !important;
+        margin-bottom: 0.5rem;
+    }
+}

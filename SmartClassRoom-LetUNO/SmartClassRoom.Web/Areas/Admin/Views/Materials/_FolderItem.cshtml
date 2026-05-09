@@ -1,0 +1,15 @@
+@model MaterialFolderViewModel
+@using SmartClassRoom.Web.Services.Interfaces
+
+<a href="#" class="list-group-item list-group-item-action folder-item" data-folder-id="@Model.Id">
+    <i class="bi bi-folder me-2"></i> @Model.Name
+    <span class="badge bg-secondary float-end">@Model.MaterialCount</span>
+</a>
+
+@foreach (var subFolder in Model.SubFolders)
+{
+    <a href="#" class="list-group-item list-group-item-action folder-item subfolder-item" data-folder-id="@subFolder.Id">
+        <i class="bi bi-folder me-2"></i> @subFolder.Name
+        <span class="badge bg-secondary float-end">@subFolder.MaterialCount</span>
+    </a>
+}

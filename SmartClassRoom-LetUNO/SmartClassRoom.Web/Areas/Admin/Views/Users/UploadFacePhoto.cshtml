@@ -1,0 +1,187 @@
+@{
+    ViewData["Title"] = "Upload Face Photo";
+    ViewData["PageTitle"] = "Upload Face Photo";
+    ViewData["PageDescription"] = "Upload a face photo for face recognition attendance";
+    ViewData["PageIcon"] = "person-bounding-box";
+}
+
+@section PageActions {
+    <a asp-action="Details" asp-route-id="@ViewBag.UserId" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Details
+    </a>
+}
+
+<div class="form-container">
+    <form asp-action="UploadFacePhoto" asp-route-id="@ViewBag.UserId" method="post" enctype="multipart/form-data" id="uploadFacePhotoForm">
+        @Html.AntiForgeryToken()
+
+        <!-- User Info Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-person-circle"></i>
+                User Information
+            </h3>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <div>
+                    <strong>User:</strong> @ViewBag.UserName<br />
+                    <strong>Note:</strong> The face photo will be used for face recognition attendance. Make sure the photo is clear and shows the face clearly.
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Photo Section -->
+        @if (!string.IsNullOrEmpty(ViewBag.CurrentPhoto))
+        {
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-image"></i>
+                    Current Photo
+                </h3>
+
+                <div class="text-center">
+                    <img src="@ViewBag.CurrentPhoto" alt="Current face photo" class="img-thumbnail" style="max-width: 300px; max-height: 300px;" />
+                    <p class="mt-2 text-muted">Uploading a new photo will replace this one</p>
+                </div>
+            </div>
+        }
+
+        <!-- Upload Photo Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-cloud-upload"></i>
+                Upload New Photo
+            </h3>
+
+            <div class="form-row single-column">
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i class="bi bi-file-image"></i> Select Face Photo
+                    </label>
+
+                    <div class="file-upload-wrapper">
+                        <input type="file" name="facePhoto" id="facePhotoInput" class="file-upload-input" accept="image/jpeg,image/jpg,image/png" required />
+                        <label for="facePhotoInput" class="file-upload-label">
+                            <i class="bi bi-cloud-upload"></i>
+                            <span id="fileLabel">Click to select a photo (JPG, JPEG, PNG)</span>
+                        </label>
+                    </div>
+
+                    <small class="form-text">
+                        Maximum file size: 5MB. Allowed formats: JPG, JPEG, PNG
+                    </small>
+
+                    <!-- Preview Area -->
+                    <div id="imagePreview" class="file-upload-preview" style="display: none;">
+                        <i class="bi bi-image"></i>
+                        <span id="fileName"></span>
+                        <button type="button" class="btn btn-sm btn-danger ms-auto" id="removeImage">
+                            <i class="bi bi-x"></i> Remove
+                        </button>
+                    </div>
+
+                    <!-- Live Preview -->
+                    <div id="livePreview" class="text-center mt-3" style="display: none;">
+                        <img id="previewImage" src="" alt="Preview" class="img-thumbnail" style="max-width: 300px; max-height: 300px;" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Face Recognition Guidelines -->
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div>
+                    <strong>Face Photo Guidelines:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Photo should be taken in good lighting</li>
+                        <li>Face should be clearly visible and not covered</li>
+                        <li>Look directly at the camera</li>
+                        <li>Remove sunglasses or face masks</li>
+                        <li>Neutral facial expression is recommended</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="uploadButton" disabled>
+                <i class="bi bi-cloud-upload"></i> Upload Photo
+            </button>
+            <a asp-action="Details" asp-route-id="@ViewBag.UserId" class="btn btn-outline">
+                <i class="bi bi-x-circle"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const fileInput = $('#facePhotoInput');
+            const fileLabel = $('#fileLabel');
+            const fileName = $('#fileName');
+            const imagePreview = $('#imagePreview');
+            const livePreview = $('#livePreview');
+            const previewImage = $('#previewImage');
+            const removeButton = $('#removeImage');
+            const uploadButton = $('#uploadButton');
+
+            // File selection handler
+            fileInput.on('change', function () {
+                const file = this.files[0];
+
+                if (file) {
+                    // Validate file type
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                    if (!allowedTypes.includes(file.type)) {
+                        alert('Invalid file type. Please select a JPG, JPEG, or PNG image.');
+                        this.value = '';
+                        return;
+                    }
+
+                    // Validate file size (5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File size must be less than 5MB.');
+                        this.value = '';
+                        return;
+                    }
+
+                    // Show file info
+                    fileName.text(file.name);
+                    imagePreview.fadeIn(300);
+
+                    // Show live preview
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        previewImage.attr('src', e.target.result);
+                        livePreview.fadeIn(300);
+                    };
+                    reader.readAsDataURL(file);
+
+                    // Enable upload button
+                    uploadButton.prop('disabled', false);
+                } else {
+                    imagePreview.hide();
+                    livePreview.hide();
+                    uploadButton.prop('disabled', true);
+                }
+            });
+
+            // Remove image handler
+            removeButton.on('click', function () {
+                fileInput.val('');
+                imagePreview.fadeOut(300);
+                livePreview.fadeOut(300);
+                uploadButton.prop('disabled', true);
+            });
+
+            // Form submission handler
+            $('#uploadFacePhotoForm').on('submit', function () {
+                uploadButton.prop('disabled', true);
+                uploadButton.html('<span class="spinner-border spinner-border-sm me-2"></span> Uploading...');
+            });
+        });
+    </script>
+}

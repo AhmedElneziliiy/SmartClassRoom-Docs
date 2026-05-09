@@ -1,0 +1,353 @@
+@model SmartClassRoom.Web.Models.ViewModels.Users.CreateUserRequest
+@{
+    ViewData["Title"] = "Create User";
+    ViewData["PageTitle"] = "Create New User";
+    ViewData["PageDescription"] = "Add a new student or teacher to the system";
+    ViewData["PageIcon"] = "person-plus";
+}
+
+@section PageActions {
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="form-container">
+    <form asp-action="Create" method="post" id="createUserForm">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-person-circle"></i>
+                Basic Information
+            </h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="FullName" class="form-label required">
+                        <i class="bi bi-person"></i> Full Name
+                    </label>
+                    <input asp-for="FullName" class="form-control" placeholder="Enter full name" />
+                    <span asp-validation-for="FullName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Email" class="form-label required">
+                        <i class="bi bi-envelope"></i> Email Address
+                    </label>
+                    <input asp-for="Email" class="form-control" type="email" placeholder="user@example.com" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="Password" class="form-label">
+                        <i class="bi bi-lock"></i> Password (Optional)
+                    </label>
+                    <input asp-for="Password" class="form-control" type="password" placeholder="Leave empty for default password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                    <small class="form-text">If empty, default password <strong>Pass@123</strong> will be used</small>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="PhoneNumber" class="form-label">
+                        <i class="bi bi-telephone"></i> Phone Number
+                    </label>
+                    <input asp-for="PhoneNumber" class="form-control" type="tel" placeholder="+1234567890" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="UserType" class="form-label required">
+                        <i class="bi bi-shield"></i> User Type
+                    </label>
+                    <select asp-for="UserType" class="form-control" id="userTypeSelect">
+                        <option value="">-- Select User Type --</option>
+                        <option value="Student">Student</option>
+                        <option value="Teacher">Teacher</option>
+                    </select>
+                    <span asp-validation-for="UserType" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Role" class="form-label required">
+                        <i class="bi bi-key"></i> Role
+                    </label>
+                    <select asp-for="Role" class="form-control" asp-items="ViewBag.Roles">
+                        <option value="">-- Select Role --</option>
+                    </select>
+                    <span asp-validation-for="Role" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="UniversityId" class="form-label">
+                        <i class="bi bi-building"></i> University
+                    </label>
+                    <select asp-for="UniversityId" class="form-control" asp-items="ViewBag.Universities">
+                        <option value="">-- Select University --</option>
+                    </select>
+                    <span asp-validation-for="UniversityId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-toggle-on"></i> Status
+                    </label>
+                    <div class="form-check">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                        <label asp-for="IsActive" class="form-check-label">Active User</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal Information Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-person-vcard"></i>
+                Personal Information
+            </h3>
+
+            <div class="form-row three-columns">
+                <div class="form-group">
+                    <label asp-for="NationalId" class="form-label">
+                        <i class="bi bi-card-text"></i> National ID
+                    </label>
+                    <input asp-for="NationalId" class="form-control" placeholder="Enter national ID" />
+                    <span asp-validation-for="NationalId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="DateOfBirth" class="form-label">
+                        <i class="bi bi-calendar"></i> Date of Birth
+                    </label>
+                    <input asp-for="DateOfBirth" class="form-control" type="date" />
+                    <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Gender" class="form-label">
+                        <i class="bi bi-gender-ambiguous"></i> Gender
+                    </label>
+                    <select asp-for="Gender" class="form-control">
+                        <option value="">-- Select Gender --</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                    <span asp-validation-for="Gender" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row single-column">
+                <div class="form-group">
+                    <label asp-for="Address" class="form-label">
+                        <i class="bi bi-geo-alt"></i> Address
+                    </label>
+                    <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter full address"></textarea>
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student-Specific Fields -->
+        <div class="form-section" id="studentFields" style="display: none;">
+            <h3 class="form-section-title">
+                <i class="bi bi-mortarboard"></i>
+                Student Information
+            </h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="StudentCode" class="form-label">
+                        <i class="bi bi-hash"></i> Student Code
+                    </label>
+                    <input asp-for="StudentCode" class="form-control" placeholder="Enter student code" />
+                    <span asp-validation-for="StudentCode" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="DepartmentId" class="form-label">
+                        <i class="bi bi-building"></i> Department
+                    </label>
+                    <select asp-for="DepartmentId" class="form-control" asp-items="ViewBag.Departments">
+                        <option value="">-- Select Department --</option>
+                    </select>
+                    <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row three-columns">
+                <div class="form-group">
+                    <label asp-for="LevelId" class="form-label">
+                        <i class="bi bi-layers"></i> Level
+                    </label>
+                    <select asp-for="LevelId" class="form-control" asp-items="ViewBag.Levels">
+                        <option value="">-- Select Level --</option>
+                    </select>
+                    <span asp-validation-for="LevelId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="SectionId" class="form-label">
+                        <i class="bi bi-grid"></i> Section
+                    </label>
+                    <select asp-for="SectionId" class="form-control" asp-items="ViewBag.Sections">
+                        <option value="">-- Select Section --</option>
+                    </select>
+                    <span asp-validation-for="SectionId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="GroupId" class="form-label">
+                        <i class="bi bi-people"></i> Group
+                    </label>
+                    <select asp-for="GroupId" class="form-control" asp-items="ViewBag.Groups">
+                        <option value="">-- Select Group --</option>
+                    </select>
+                    <span asp-validation-for="GroupId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="EnrollmentDate" class="form-label">
+                        <i class="bi bi-calendar-check"></i> Enrollment Date
+                    </label>
+                    <input asp-for="EnrollmentDate" class="form-control" type="date" />
+                    <span asp-validation-for="EnrollmentDate" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="AcademicStatus" class="form-label">
+                        <i class="bi bi-info-circle"></i> Academic Status
+                    </label>
+                    <select asp-for="AcademicStatus" class="form-control">
+                        <option value="">-- Select Status --</option>
+                        <option value="Active">Active</option>
+                        <option value="Suspended">Suspended</option>
+                        <option value="Graduated">Graduated</option>
+                        <option value="Withdrawn">Withdrawn</option>
+                    </select>
+                    <span asp-validation-for="AcademicStatus" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher-Specific Fields -->
+        <div class="form-section" id="teacherFields" style="display: none;">
+            <h3 class="form-section-title">
+                <i class="bi bi-person-badge"></i>
+                Teacher Information
+            </h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="EmployeeCode" class="form-label">
+                        <i class="bi bi-hash"></i> Employee Code
+                    </label>
+                    <input asp-for="EmployeeCode" class="form-control" placeholder="Enter employee code" />
+                    <span asp-validation-for="EmployeeCode" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="DepartmentId" class="form-label">
+                        <i class="bi bi-building"></i> Department
+                    </label>
+                    <select asp-for="DepartmentId" class="form-control" asp-items="ViewBag.Departments">
+                        <option value="">-- Select Department --</option>
+                    </select>
+                    <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="Title" class="form-label">
+                        <i class="bi bi-award"></i> Title
+                    </label>
+                    <input asp-for="Title" class="form-control" placeholder="e.g., Dr., Prof." />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Specialization" class="form-label">
+                        <i class="bi bi-book"></i> Specialization
+                    </label>
+                    <input asp-for="Specialization" class="form-control" placeholder="Enter specialization" />
+                    <span asp-validation-for="Specialization" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="HireDate" class="form-label">
+                        <i class="bi bi-calendar-check"></i> Hire Date
+                    </label>
+                    <input asp-for="HireDate" class="form-control" type="date" />
+                    <span asp-validation-for="HireDate" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="EmploymentStatus" class="form-label">
+                        <i class="bi bi-briefcase"></i> Employment Status
+                    </label>
+                    <select asp-for="EmploymentStatus" class="form-control">
+                        <option value="">-- Select Status --</option>
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                    </select>
+                    <span asp-validation-for="EmploymentStatus" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i> Create User
+            </button>
+            <a asp-action="Index" class="btn btn-outline">
+                <i class="bi bi-x-circle"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="~/js/cascading-dropdowns.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Function to show/hide sections based on user type
+            function updateUserTypeSections() {
+                var userType = $('#userTypeSelect').val();
+
+                if (userType === 'Student') {
+                    $('#studentFields').show();
+                    $('#teacherFields').hide();
+                } else if (userType === 'Teacher') {
+                    $('#teacherFields').show();
+                    $('#studentFields').hide();
+                } else {
+                    $('#studentFields').hide();
+                    $('#teacherFields').hide();
+                }
+            }
+
+            // Show/hide sections based on user type
+            $('#userTypeSelect').on('change', function () {
+                updateUserTypeSections();
+            });
+
+            // Trigger on page load to show correct section
+            updateUserTypeSections();
+        });
+    </script>
+}

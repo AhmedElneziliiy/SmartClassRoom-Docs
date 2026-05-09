@@ -1,0 +1,137 @@
+
+@model SmartClassRoom.Web.Models.ViewModels.Room.CreateRoomRequest
+
+@{
+    ViewData["Title"] = "Create Room";
+    ViewData["PageTitle"] = "Create Room";
+    ViewData["PageIcon"] = "door-open";
+    ViewData["PageDescription"] = "Add a new room to the system";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="card form-card">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-info-circle"></i> Basic Information
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Number" class="form-label"></label>
+                        <input asp-for="Number" class="form-control" placeholder="Enter room number (e.g., 101, A-205)" />
+                        <span asp-validation-for="Number" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" placeholder="Enter room name (optional)" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="RoomType" class="form-label"></label>
+                        <select asp-for="RoomType" class="form-select" asp-items="ViewBag.RoomTypes">
+                            <option value="">-- Select Type --</option>
+                        </select>
+                        <span asp-validation-for="RoomType" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-geo-alt"></i> Location Details
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Building" class="form-label"></label>
+                        <input asp-for="Building" class="form-control" list="buildingsList" placeholder="Enter or select building" />
+                        <datalist id="buildingsList">
+                            @foreach (var bldg in ViewBag.Buildings as SelectList)
+                            {
+                                <option value="@bldg.Value"></option>
+                            }
+                        </datalist>
+                        <span asp-validation-for="Building" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Floor" class="form-label"></label>
+                        <input asp-for="Floor" class="form-control" placeholder="Enter floor (e.g., 1, G, B1)" />
+                        <span asp-validation-for="Floor" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Capacity" class="form-label"></label>
+                        <input asp-for="Capacity" class="form-control" type="number" min="1" max="1000" placeholder="Enter room capacity" />
+                        <span asp-validation-for="Capacity" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipment & Status Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-gear"></i> Equipment & Status
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label asp-for="Equipment" class="form-label"></label>
+                        <textarea asp-for="Equipment" class="form-control" rows="2"
+                                  placeholder="Enter equipment (e.g., Projector, Whiteboard, Computers)"></textarea>
+                        <span asp-validation-for="Equipment" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Status" class="form-label"></label>
+                        <select asp-for="Status" class="form-select" asp-items="ViewBag.Statuses">
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Status Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-check-circle"></i> Active Status
+                </h5>
+
+                <div class="form-check form-switch">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Create Room
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,153 @@
+@{
+    ViewData["Title"] = "Student List Report";
+    ViewData["PageTitle"] = "Student List Report";
+    ViewData["PageDescription"] = "Generate comprehensive student list with scores, GPA, level, and term information";
+    ViewData["PageIcon"] = "people";
+}
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-people me-2"></i>
+            Generate Student List Report
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6 class="text-muted">Report Options</h6>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Filter students by term, level, or department. The report includes all student data with scores, GPA, current courses, and academic standing.
+                </div>
+            </div>
+            <div class="col-md-6">
+                <form method="get" asp-action="GenerateStudentListPdf">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Term (Optional)</label>
+                        <select name="termId" class="form-select">
+                            <option value="">All Terms</option>
+                            @foreach (var term in ViewBag.Terms as IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Term>)
+                            {
+                                <option value="@term.Id">@term.Name</option>
+                            }
+                        </select>
+                        <small class="text-muted">Filter by specific term or show all</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Level (Optional)</label>
+                        <input type="text" name="level" class="form-control" placeholder="e.g., 1, 2, 3, 4" />
+                        <small class="text-muted">Student academic level</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Department (Optional)</label>
+                        <select name="department" class="form-select">
+                            <option value="">All Departments</option>
+                            @foreach (var dept in ViewBag.Departments as IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Department>)
+                            {
+                                <option value="@dept.Name">@dept.Name</option>
+                            }
+                        </select>
+                        <small class="text-muted">Filter by department</small>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-file-pdf me-2"></i>
+                            Download Student List Report (PDF)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title">Report Contents</h6>
+        <p class="text-muted">The student list report will include:</p>
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary">Student Information</h6>
+                <ul class="text-muted">
+                    <li>Student Code</li>
+                    <li>Full Name</li>
+                    <li>Email Address</li>
+                    <li>Level (Year/Grade)</li>
+                    <li>Section</li>
+                    <li>Department</li>
+                    <li>Current Status (Active/Inactive)</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary">Academic Data</h6>
+                <ul class="text-muted">
+                    <li>Number of Current Courses</li>
+                    <li><strong>Current Term GPA</strong></li>
+                    <li><strong>Cumulative GPA (CGPA)</strong></li>
+                    <li>Total Credits Completed</li>
+                    <li>Current Term Information</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title">Individual Student Reports</h6>
+        <p class="text-muted">
+            For detailed individual student reports with course-by-course breakdown, grades, and attendance,
+            go to <a asp-area="Admin" asp-controller="Users" asp-action="Index"><strong>Users → Students</strong></a>
+            and click the PDF icon next to any student.
+        </p>
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong>Tip:</strong> The individual student report includes:
+            <ul class="mb-0 mt-2">
+                <li>Complete student information</li>
+                <li>All current courses with teachers</li>
+                <li>Course grades and letter grades</li>
+                <li>Attendance percentage per course</li>
+                <li>GPA calculations</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>
+        Back to Reports
+    </a>
+</div>
+
+@section Styles {
+    <style>
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        small.text-muted {
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .alert-info {
+            border-left: 4px solid #0dcaf0;
+        }
+
+        .alert-success {
+            border-left: 4px solid #198754;
+        }
+    </style>
+}

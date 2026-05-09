@@ -1,0 +1,167 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.University>
+
+@{
+    ViewData["Title"] = "Universities";
+    ViewData["PageTitle"] = "Universities";
+    ViewData["PageIcon"] = "building";
+    ViewData["PageDescription"] = "Manage all universities in the system";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add University
+    </a>
+}
+
+<!-- Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="isActive" class="form-label">Status</label>
+                <select name="isActive" id="isActive" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="true" selected="@(ViewBag.SelectedIsActive == true)">Active</option>
+                    <option value="false" selected="@(ViewBag.SelectedIsActive == false)">Inactive</option>
+                </select>
+            </div>
+
+            <div class="col-md-9 d-flex align-items-end justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Universities Table -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th asp-sortable-column="Name" asp-column-display="University Name"></th>
+                            <th asp-sortable-column="Code" asp-column-display="Code"></th>
+                            <th>Contact Information</th>
+                            <th>Departments</th>
+                            <th asp-sortable-column="Status" asp-column-display="Status"></th>
+                            <th asp-sortable-column="Created" asp-column-display="Created Date"></th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var university in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@university.Name</strong>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(university.Code))
+                                    {
+                                        <span class="badge bg-secondary">@university.Code</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(university.Email))
+                                    {
+                                        <div><i class="bi bi-envelope"></i> @university.Email</div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(university.Phone))
+                                    {
+                                        <div><i class="bi bi-telephone"></i> @university.Phone</div>
+                                    }
+                                    @if (string.IsNullOrEmpty(university.Email) && string.IsNullOrEmpty(university.Phone))
+                                    {
+                                        <span class="text-muted">No contact info</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">@university.Departments.Count dept(s)</span>
+                                </td>
+                                <td>
+                                    @if (university.IsActive)
+                                    {
+                                        <span class="status-badge active">
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge inactive">
+                                            <i class="bi bi-x-circle me-1"></i>Inactive
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i>@university.CreatedAt.ToString("MMM dd, yyyy")
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a asp-action="Details" asp-route-id="@university.Id" class="action-btn info" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@university.Id" class="action-btn warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        @if (university.IsActive)
+                                        {
+                                            <form asp-action="Deactivate" asp-route-id="@university.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn danger" title="Deactivate"
+                                                        onclick="return confirm('Are you sure you want to deactivate this university?')">
+                                                    <i class="bi bi-slash-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Activate" asp-route-id="@university.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn success" title="Activate"
+                                                        onclick="return confirm('Are you sure you want to activate this university?')">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.Pagination != null)
+            {
+                @await Html.PartialAsync("_Pagination", ViewBag.Pagination as SmartClassRoom.Web.Models.ViewModels.Common.PaginationViewModel)
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-building"></i>
+                <h3>No Universities Found</h3>
+                <p>There are no universities matching your criteria.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add First University
+                </a>
+            </div>
+        }
+    </div>
+</div>

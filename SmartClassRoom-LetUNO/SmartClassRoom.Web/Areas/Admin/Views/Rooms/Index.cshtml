@@ -1,0 +1,217 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Scheduling.Room>
+
+@{
+    ViewData["Title"] = "Rooms";
+    ViewData["PageTitle"] = "Rooms";
+    ViewData["PageIcon"] = "door-open";
+    ViewData["PageDescription"] = "Manage all rooms and their ESP devices";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Room
+    </a>
+}
+
+<!-- Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-2">
+                <label for="building" class="form-label">Building</label>
+                <select name="building" id="building" class="form-select">
+                    <option value="">All Buildings</option>
+                    @foreach (var bldg in ViewBag.Buildings as SelectList)
+                    {
+                        <option value="@bldg.Value" selected="@(bldg.Value == ViewBag.SelectedBuilding)">
+                            @bldg.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="roomType" class="form-label">Room Type</label>
+                <select name="roomType" id="roomType" class="form-select">
+                    <option value="">All Types</option>
+                    @foreach (var rtype in ViewBag.RoomTypes as SelectList)
+                    {
+                        <option value="@rtype.Value" selected="@(rtype.Value == ViewBag.SelectedRoomType)">
+                            @rtype.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    @foreach (var stat in ViewBag.Statuses as SelectList)
+                    {
+                        <option value="@stat.Value" selected="@(stat.Value == ViewBag.SelectedStatus)">
+                            @stat.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="hasDevices" class="form-label">Has Devices</label>
+                <select name="hasDevices" id="hasDevices" class="form-select">
+                    <option value="">All</option>
+                    <option value="true" selected="@(ViewBag.SelectedHasDevices == true)">With Devices</option>
+                    <option value="false" selected="@(ViewBag.SelectedHasDevices == false)">No Devices</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="isActive" class="form-label">Active</label>
+                <select name="isActive" id="isActive" class="form-select">
+                    <option value="">All</option>
+                    <option value="true" selected="@(ViewBag.SelectedIsActive == true)">Active</option>
+                    <option value="false" selected="@(ViewBag.SelectedIsActive == false)">Inactive</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Rooms Table -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th asp-sortable-column="Number" asp-column-display="Room Number"></th>
+                            <th asp-sortable-column="Name" asp-column-display="Name"></th>
+                            <th asp-sortable-column="RoomType" asp-column-display="Type"></th>
+                            <th asp-sortable-column="Capacity" asp-column-display="Capacity"></th>
+                            <th asp-sortable-column="Building" asp-column-display="Building"></th>
+                            <th>Device ID</th>
+                            <th>Devices</th>
+                            <th asp-sortable-column="Status" asp-column-display="Status"></th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var room in Model)
+                        {
+                            <tr>
+                                <td><strong>@room.Number</strong></td>
+                                <td>@(room.Name ?? "-")</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(room.RoomType))
+                                    {
+                                        <span class="badge bg-secondary">@room.RoomType</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-people"></i> @room.Capacity
+                                    </span>
+                                </td>
+                                <td>@(room.Building ?? "-")</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(room.DeviceId))
+                                    {
+                                        <span class="badge bg-primary" title="Device Modulation Number">
+                                            <i class="bi bi-cpu"></i> @room.DeviceId
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not Set</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-success" title="ESP Devices">
+                                        @room.ESPDevices.Count <i class="bi bi-router"></i>
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (room.IsActive)
+                                    {
+                                        <span class="status-badge active">
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge inactive">
+                                            <i class="bi bi-x-circle me-1"></i>Inactive
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a asp-action="Details" asp-route-id="@room.Id" class="action-btn info" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@room.Id" class="action-btn warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        @if (room.IsActive)
+                                        {
+                                            <form asp-action="Deactivate" asp-route-id="@room.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn danger" title="Deactivate"
+                                                        onclick="return confirm('Are you sure you want to deactivate this room?')">
+                                                    <i class="bi bi-slash-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Activate" asp-route-id="@room.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn success" title="Activate"
+                                                        onclick="return confirm('Are you sure you want to activate this room?')">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.Pagination != null)
+            {
+                @await Html.PartialAsync("_Pagination", ViewBag.Pagination as SmartClassRoom.Web.Models.ViewModels.Common.PaginationViewModel)
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-door-open"></i>
+                <h3>No Rooms Found</h3>
+                <p>There are no rooms matching your criteria.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add First Room
+                </a>
+            </div>
+        }
+    </div>
+</div>

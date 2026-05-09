@@ -1,0 +1,242 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.CourseOffering>
+
+@{
+    ViewData["Title"] = "Course Offerings";
+    var currentPage = ViewBag.CurrentPage;
+    var totalPages = ViewBag.TotalPages;
+    var termId = ViewBag.TermId;
+    var courseId = ViewBag.CourseId;
+    var teacherId = ViewBag.TeacherId;
+    var sectionId = ViewBag.SectionId;
+    var status = ViewBag.Status;
+    var sortBy = ViewBag.SortBy;
+    var ascending = ViewBag.Ascending;
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="page-title">Course Offerings</h2>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> New Offering
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" asp-action="Index">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Term</label>
+                        <select name="termId" class="form-select">
+                            <option value="">All Terms</option>
+                            @foreach (var item in (SelectList)ViewBag.Terms)
+                            {
+                                <option value="@item.Value" selected="@(item.Value == termId?.ToString())">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Course</label>
+                        <select name="courseId" class="form-select">
+                            <option value="">All Courses</option>
+                            @foreach (var item in (SelectList)ViewBag.Courses)
+                            {
+                                <option value="@item.Value" selected="@(item.Value == courseId?.ToString())">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Teacher</label>
+                        <select name="teacherId" class="form-select">
+                            <option value="">All Teachers</option>
+                            @foreach (var item in (SelectList)ViewBag.Teachers)
+                            {
+                                <option value="@item.Value" selected="@(item.Value == teacherId?.ToString())">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="Active" selected="@(status == "Active")">Active</option>
+                            <option value="Completed" selected="@(status == "Completed")">Completed</option>
+                            <option value="Cancelled" selected="@(status == "Cancelled")">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-secondary w-100">
+                            <i class="bi bi-funnel"></i> Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Course Offerings Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Term</th>
+                            <th>Teacher</th>
+                            <th>Section</th>
+                            <th>Sessions/Week</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var offering in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@offering.Course.Code</strong><br />
+                                    <small class="text-muted">@offering.Course.Name</small>
+                                </td>
+                                <td>@offering.Term.Name</td>
+                                <td>@offering.Teacher.FullName</td>
+                                <td>@(offering.Section?.Name ?? "N/A")</td>
+                                <td>@offering.SessionsPerWeek</td>
+                                <td>
+                                    @{
+                                        var enrolledCount = offering.Enrollments.Count(e => e.Status == "Enrolled");
+                                        var percentage = offering.MaxStudents > 0 ? (enrolledCount * 100.0 / offering.MaxStudents) : 0;
+                                        var capacityClass = percentage >= 90 ? "text-danger" : percentage >= 70 ? "text-warning" : "text-success";
+                                    }
+                                    <span class="@capacityClass">
+                                        @enrolledCount / @offering.MaxStudents
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (offering.Status == "Active")
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else if (offering.Status == "Completed")
+                                    {
+                                        <span class="badge bg-secondary">Completed</span>
+                                    }
+                                    else if (offering.Status == "Cancelled")
+                                    {
+                                        <span class="badge bg-danger">Cancelled</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info">@offering.Status</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Details" asp-route-id="@offering.Id" class="btn btn-outline-info" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@offering.Id" class="btn btn-outline-primary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        @if (offering.Status == "Active")
+                                        {
+                                            <form asp-action="Cancel" asp-route-id="@offering.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Are you sure you want to cancel this offering?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-outline-danger" title="Cancel">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-4">
+                    <p class="text-muted">No course offerings found.</p>
+                </div>
+            }
+
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-page="@(currentPage - 1)"
+                               asp-route-termId="@termId"
+                               asp-route-courseId="@courseId"
+                               asp-route-teacherId="@teacherId"
+                               asp-route-sectionId="@sectionId"
+                               asp-route-status="@status"
+                               asp-route-sortBy="@sortBy"
+                               asp-route-ascending="@ascending">
+                                Previous
+                            </a>
+                        </li>
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-termId="@termId"
+                                   asp-route-courseId="@courseId"
+                                   asp-route-teacherId="@teacherId"
+                                   asp-route-sectionId="@sectionId"
+                                   asp-route-status="@status"
+                                   asp-route-sortBy="@sortBy"
+                                   asp-route-ascending="@ascending">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-page="@(currentPage + 1)"
+                               asp-route-termId="@termId"
+                               asp-route-courseId="@courseId"
+                               asp-route-teacherId="@teacherId"
+                               asp-route-sectionId="@sectionId"
+                               asp-route-status="@status"
+                               asp-route-sortBy="@sortBy"
+                               asp-route-ascending="@ascending">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>

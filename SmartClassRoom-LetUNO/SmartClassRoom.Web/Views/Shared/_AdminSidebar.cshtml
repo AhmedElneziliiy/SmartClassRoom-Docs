@@ -1,0 +1,196 @@
+@using Microsoft.AspNetCore.Identity
+@using SmartClassRoom.Web.Models.Entities.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@* Admin Sidebar - Vision Valley Style *@
+<aside class="sidebar">
+    <!-- Sidebar Header -->
+    <div class="sidebar-header">
+        <i class="sidebar-logo bi bi-mortarboard-fill"></i>
+        <h2 class="sidebar-title">SmartClassRoom</h2>
+    </div>
+
+    @if (SignInManager.IsSignedIn(User))
+    {
+        var user = await UserManager.GetUserAsync(User);
+        var userName = user?.FullName ?? user?.UserName ?? "User";
+        var userInitials = string.Join("", userName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(n => n.FirstOrDefault()).Take(2));
+        var userRole = User.IsInRole("Admin") ? "Admin" : (User.IsInRole("Teacher") ? "Teacher" : "Student");
+
+        <!-- User Section -->
+        <div class="sidebar-user">
+            <div class="user-info">
+                <div class="user-avatar">@userInitials</div>
+                <div class="user-details">
+                    <p class="user-name">@userName</p>
+                    <span class="user-role @userRole.ToLower()">@userRole</span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a class="nav-link" href="/Admin/Dashboard">
+                    <i class="nav-icon bi bi-speedometer2"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+        </ul>
+        <!-- System -->
+        @* <h6 class="nav-section">System</h6> *@
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a class="nav-link" href="/Admin/Users">
+                    <i class="nav-icon bi bi-people"></i>
+                    <span class="nav-text">Users</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Academic -->
+        <h6 class="nav-section">Academic</h6>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Universities" asp-action="Index">
+                    <i class="nav-icon bi bi-building"></i>
+                    <span class="nav-text">Universities</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Departments" asp-action="Index">
+                    <i class="nav-icon bi bi-diagram-3"></i>
+                    <span class="nav-text">Departments</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Levels" asp-action="Index">
+                    <i class="nav-icon bi bi-layers"></i>
+                    <span class="nav-text">Levels</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Sections" asp-action="Index">
+                    <i class="nav-icon bi bi-collection"></i>
+                    <span class="nav-text">Sections</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Groups" asp-action="Index">
+                    <i class="nav-icon bi bi-people-fill"></i>
+                    <span class="nav-text">Groups</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Courses" asp-action="Index">
+                    <i class="nav-icon bi bi-journal"></i>
+                    <span class="nav-text">Courses</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Terms" asp-action="Index">
+                    <i class="nav-icon bi bi-calendar-range"></i>
+                    <span class="nav-text">Terms</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="CourseOfferings" asp-action="Index">
+                    <i class="nav-icon bi bi-calendar3"></i>
+                    <span class="nav-text">Course Offerings</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Attendance -->
+        <h6 class="nav-section">Attendance</h6>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a class="nav-link" href="/Admin/Attendances">
+                    <i class="nav-icon bi bi-check2-square"></i>
+                    <span class="nav-text">Attendance</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/Admin/Sessions">
+                    <i class="nav-icon bi bi-clock-history"></i>
+                    <span class="nav-text">Sessions</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Schedule -->
+        <h6 class="nav-section">Schedule</h6>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Timetables" asp-action="Index">
+                    <i class="nav-icon bi bi-table"></i>
+                    <span class="nav-text">Timetables</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/Admin/Rooms">
+                    <i class="nav-icon bi bi-door-open"></i>
+                    <span class="nav-text">Rooms</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Assessment -->
+        <h6 class="nav-section">Assessment</h6>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Grades" asp-action="Index">
+                    <i class="nav-icon bi bi-award"></i>
+                    <span class="nav-text">Grades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/Admin/Quizzes">
+                    <i class="nav-icon bi bi-question-circle"></i>
+                    <span class="nav-text">Quizzes</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Resources -->
+        <h6 class="nav-section">Resources</h6>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a class="nav-link" href="/Admin/Materials">
+                    <i class="nav-icon bi bi-folder"></i>
+                    <span class="nav-text">Materials</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/Admin/Reports">
+                    <i class="nav-icon bi bi-file-earmark-bar-graph"></i>
+                    <span class="nav-text">Reports</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Logout Button -->
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <div class="sidebar-footer">
+            <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+    }
+</aside>
+
+<!-- Mobile Menu Button -->
+<button class="mobile-menu-btn" type="button">
+    <i class="bi bi-list"></i>
+</button>
+
+<!-- Sidebar Overlay (Mobile) -->
+<div class="sidebar-overlay"></div>

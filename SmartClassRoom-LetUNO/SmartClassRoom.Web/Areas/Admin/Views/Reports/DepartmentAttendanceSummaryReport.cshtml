@@ -1,0 +1,188 @@
+@{
+    var terms = ViewBag.Terms as IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Term>;
+
+    ViewData["Title"] = "Department Attendance Summary";
+    ViewData["PageTitle"] = "Department Attendance Summary";
+    ViewData["PageDescription"] = "High-level attendance overview across all departments";
+    ViewData["PageIcon"] = "building";
+}
+
+<div class="card">
+    <div class="card-header bg-teal text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-building me-2"></i>
+            Generate Department Attendance Summary Report
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            This report provides a high-level overview of attendance statistics across all departments, including at-risk student counts.
+        </div>
+
+        <form method="get" asp-action="GenerateDepartmentAttendanceSummaryPdf" id="reportForm">
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <label class="form-label fw-bold">Filter Options</label>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-funnel me-2"></i>
+                        Choose either a specific term OR a custom date range (not both). Leave all fields blank to include all data.
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Term (Optional)</label>
+                    <select name="termId" id="termSelect" class="form-select">
+                        <option value="">-- All Terms --</option>
+                        @if (terms != null)
+                        {
+                            @foreach (var term in terms.OrderByDescending(t => t.StartDate))
+                            {
+                                <option value="@term.Id">@term.Name</option>
+                            }
+                        }
+                    </select>
+                    <small class="text-muted">Select a specific term to filter by</small>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">OR Start Date (Optional)</label>
+                    <input type="date" name="startDate" class="form-control" id="startDate" />
+                    <small class="text-muted">Custom date range start</small>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">End Date (Optional)</label>
+                    <input type="date" name="endDate" class="form-control" id="endDate" />
+                    <small class="text-muted">Custom date range end</small>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label fw-bold">Export Format</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-file-pdf me-2"></i>
+                            Download PDF
+                        </button>
+                        <button type="submit"
+                                formaction="@Url.Action("GenerateDepartmentAttendanceSummaryExcel")"
+                                class="btn btn-success">
+                            <i class="bi bi-file-excel me-2"></i>
+                            Download Excel
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Back to Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title">Report Contents</h6>
+        <p class="text-muted">The department attendance summary report will include:</p>
+        <ul class="text-muted">
+            <li><strong>Overall System Statistics:</strong>
+                <ul>
+                    <li>Total number of departments</li>
+                    <li>Total student count across all departments</li>
+                    <li>System-wide attendance percentage</li>
+                    <li>Total at-risk students (below 75% attendance)</li>
+                </ul>
+            </li>
+            <li><strong>Department Breakdown:</strong> For each department:
+                <ul>
+                    <li>Department name</li>
+                    <li>Number of students in the department</li>
+                    <li>Total sessions held</li>
+                    <li>Attendance counts: Present, Absent, Late, Excused</li>
+                    <li>Overall attendance percentage</li>
+                    <li>Number of at-risk students</li>
+                </ul>
+            </li>
+        </ul>
+        <div class="alert alert-danger mt-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>At-Risk Students:</strong> Students with attendance percentage below 75% are flagged as "at-risk" and require attention.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Disable date inputs when term is selected
+        document.getElementById('termSelect').addEventListener('change', function() {
+            const dateInputs = document.querySelectorAll('#startDate, #endDate');
+            if (this.value) {
+                dateInputs.forEach(input => {
+                    input.disabled = true;
+                    input.value = '';
+                });
+            } else {
+                dateInputs.forEach(input => input.disabled = false);
+            }
+        });
+
+        // Disable term when date is entered
+        const dateInputs = document.querySelectorAll('#startDate, #endDate');
+        dateInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                const termSelect = document.getElementById('termSelect');
+                const anyDateFilled = Array.from(dateInputs).some(inp => inp.value);
+                if (anyDateFilled) {
+                    termSelect.disabled = true;
+                    termSelect.value = '';
+                } else {
+                    termSelect.disabled = false;
+                }
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .bg-teal {
+            background-color: #20c997 !important;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .form-label {
+            margin-bottom: 0.5rem;
+        }
+
+        small.text-muted {
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .btn {
+            font-weight: 500;
+        }
+
+        .alert-info {
+            border-left: 4px solid #0dcaf0;
+        }
+
+        .alert-warning {
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-danger {
+            border-left: 4px solid #dc3545;
+        }
+
+        select:disabled,
+        input:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+    </style>
+}

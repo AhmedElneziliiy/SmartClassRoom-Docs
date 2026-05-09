@@ -1,0 +1,331 @@
+@model SmartClassRoom.Web.Models.Entities.Academic.Course
+
+@{
+    ViewData["Title"] = "Course Details";
+    ViewData["PageTitle"] = Model.Name;
+    ViewData["PageIcon"] = "journal";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+    var statistics = ViewBag.Statistics as SmartClassRoom.Web.Services.Interfaces.CourseStatistics;
+}
+
+@section PageActions {
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+        <i class="bi bi-pencil"></i> Edit
+    </a>
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="row g-4">
+    <!-- Left Column: Course Info -->
+    <div class="col-lg-4">
+        <div class="card detail-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle"></i> Course Information
+                </h5>
+
+                <div class="detail-group">
+                    <label>Name</label>
+                    <p><strong>@Model.Name</strong></p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Code</label>
+                    <p><span class="badge bg-secondary">@Model.Code</span></p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="detail-group">
+                        <label>Description</label>
+                        <p>@Model.Description</p>
+                    </div>
+                }
+
+                <div class="detail-group">
+                    <label>Credits</label>
+                    <p>
+                        <i class="bi bi-star-fill text-warning"></i>
+                        <strong>@Model.Credits</strong> Credit Hours
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Course Type</label>
+                    <p>
+                        @switch (Model.CourseType)
+                        {
+                            case "Lecture":
+                                <span class="badge bg-primary">@Model.CourseType</span>
+                                break;
+                            case "Lab":
+                                <span class="badge bg-success">@Model.CourseType</span>
+                                break;
+                            case "Hybrid":
+                                <span class="badge bg-info">@Model.CourseType</span>
+                                break;
+                            case "Seminar":
+                                <span class="badge bg-warning">@Model.CourseType</span>
+                                break;
+                            case "Project":
+                                <span class="badge bg-danger">@Model.CourseType</span>
+                                break;
+                            default:
+                                <span class="badge bg-secondary">@Model.CourseType</span>
+                                break;
+                        }
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Department</label>
+                    <p>
+                        <i class="bi bi-diagram-3"></i>
+                        <a asp-area="Admin" asp-controller="Departments" asp-action="Details" asp-route-id="@Model.DepartmentId">
+                            @Model.Department.Name
+                        </a>
+                    </p>
+                </div>
+
+                @if (Model.PrerequisiteCourse != null)
+                {
+                    <div class="detail-group">
+                        <label>Prerequisite Course</label>
+                        <p>
+                            <i class="bi bi-arrow-return-right"></i>
+                            <a asp-action="Details" asp-route-id="@Model.PrerequisiteCourseId">
+                                @Model.PrerequisiteCourse.Name (@Model.PrerequisiteCourse.Code)
+                            </a>
+                        </p>
+                    </div>
+                }
+
+                <div class="detail-group">
+                    <label>Status</label>
+                    <p>
+                        @if (Model.IsActive)
+                        {
+                            <span class="status-badge status-active">Active</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge status-inactive">Inactive</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Created Date</label>
+                    <p>@Model.CreatedAt.ToString("MMMM dd, yyyy")</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Card -->
+        <div class="card detail-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-gear"></i> Actions
+                </h5>
+
+                <div class="detail-actions">
+                    @if (Model.IsActive)
+                    {
+                        <form asp-action="Deactivate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-warning btn-sm w-100"
+                                    onclick="return confirm('Are you sure you want to deactivate this course? Make sure there are no active offerings.')">
+                                <i class="bi bi-slash-circle"></i> Deactivate Course
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Activate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-success btn-sm w-100"
+                                    onclick="return confirm('Are you sure you want to activate this course?')">
+                                <i class="bi bi-check-circle"></i> Activate Course
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Statistics & Related Data -->
+    <div class="col-lg-8">
+        <!-- Statistics Card -->
+        @if (statistics != null)
+        {
+            <div class="card stats-card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-graph-up"></i> Statistics
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-primary">
+                                    <i class="bi bi-calendar3"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <h3>@statistics.OfferingsCount</h3>
+                                    <p>Total Offerings</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-success">
+                                    <i class="bi bi-calendar-check"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <h3>@statistics.ActiveOfferingsCount</h3>
+                                    <p>Active Offerings</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-info">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <h3>@statistics.TotalEnrolledStudents</h3>
+                                    <p>Enrolled Students</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-warning">
+                                    <i class="bi bi-star-fill"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <h3>@statistics.Credits</h3>
+                                    <p>Credit Hours</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Course Offerings Card -->
+        <div class="card data-card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-calendar3"></i> Course Offerings
+                    </h5>
+                    @if (Model.Offerings.Any())
+                    {
+                        <a asp-area="Admin" asp-controller="CourseOfferings" asp-action="Index" asp-route-courseId="@Model.Id" class="btn btn-sm btn-outline-primary">
+                            View All <i class="bi bi-arrow-right"></i>
+                        </a>
+                    }
+                </div>
+
+                @if (Model.Offerings.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Term</th>
+                                    <th>Instructor</th>
+                                    <th>Max Students</th>
+                                    <th>Enrollments</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var offering in Model.Offerings.OrderByDescending(o => o.CreatedAt).Take(5))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-area="Admin" asp-controller="CourseOfferings" asp-action="Details" asp-route-id="@offering.Id">
+                                                @(offering.Term?.Name ?? "N/A")
+                                            </a>
+                                        </td>
+                                        <td>
+                                            @if (offering.Teacher != null)
+                                            {
+                                                <a asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@offering.TeacherId">
+                                                    @offering.Teacher.FullName
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Not Assigned</span>
+                                            }
+                                        </td>
+                                        <td>@offering.MaxStudents</td>
+                                        <td>
+                                            <span class="badge bg-secondary">@offering.Enrollments.Count</span>
+                                        </td>
+                                        <td>
+                                            @switch (offering.Status)
+                                            {
+                                                case "Active":
+                                                    <span class="status-badge status-active">Active</span>
+                                                    break;
+                                                case "Completed":
+                                                    <span class="status-badge status-inactive">Completed</span>
+                                                    break;
+                                                case "Cancelled":
+                                                    <span class="status-badge status-inactive">Cancelled</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge bg-secondary">@offering.Status</span>
+                                                    break;
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (Model.Offerings.Count > 5)
+                    {
+                        <p class="text-muted text-center mt-2 mb-0">
+                            Showing 5 of @Model.Offerings.Count offerings
+                        </p>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state-small">
+                        <i class="bi bi-calendar3"></i>
+                        <p>No course offerings found.</p>
+                        <small class="text-muted">Course offerings will appear here once they are created.</small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Prerequisite Information Card -->
+        @if (statistics != null && statistics.HasPrerequisite)
+        {
+            <div class="card detail-card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-arrow-return-right"></i> Prerequisite Information
+                    </h5>
+                    <p class="mb-0">
+                        Students must complete
+                        <a asp-action="Details" asp-route-id="@Model.PrerequisiteCourseId">
+                            <strong>@statistics.PrerequisiteCourseName</strong>
+                        </a>
+                        before enrolling in this course.
+                    </p>
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,582 @@
+/* ===================================================================
+   FORMS.CSS - Universal Form Styling System
+   SmartClassRoom - Modern Form Design
+   =================================================================== */
+
+/* CSS Variables for Forms */
+:root {
+    --form-bg: #ffffff;
+    --form-border: #e2e8f0;
+    --form-border-focus: #667eea;
+    --form-text: #2d3748;
+    --form-label: #4a5568;
+    --form-placeholder: #a0aec0;
+    --form-error: #e53e3e;
+    --form-success: #38a169;
+    --input-height: 45px;
+    --input-radius: 8px;
+    --form-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --form-shadow-focus: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ===================================================================
+   FORM CONTAINERS
+   =================================================================== */
+
+.form-container {
+    background: var(--form-bg);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.form-header {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid #f7fafc;
+}
+
+.form-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--form-text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.form-title i {
+    color: #667eea;
+    font-size: 28px;
+}
+
+.form-subtitle {
+    font-size: 14px;
+    color: #718096;
+    margin-bottom: 0;
+}
+
+/* ===================================================================
+   FORM GROUPS & ROWS
+   =================================================================== */
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.form-row.single-column {
+    grid-template-columns: 1fr;
+}
+
+.form-row.three-columns {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+/* ===================================================================
+   LABELS
+   =================================================================== */
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--form-label);
+    margin-bottom: 8px;
+    transition: color 0.2s ease;
+}
+
+.form-label.required::after {
+    content: ' *';
+    color: var(--form-error);
+    font-weight: 700;
+}
+
+.form-label i {
+    margin-right: 6px;
+    color: #667eea;
+    font-size: 13px;
+}
+
+/* ===================================================================
+   INPUT FIELDS
+   =================================================================== */
+
+.form-control {
+    width: 100%;
+    height: var(--input-height);
+    padding: 0 16px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--form-text);
+    background: var(--form-bg);
+    border: 2px solid var(--form-border);
+    border-radius: var(--input-radius);
+    box-shadow: var(--form-shadow);
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--form-border-focus);
+    box-shadow: var(--form-shadow-focus);
+}
+
+.form-control:disabled,
+.form-control[readonly] {
+    background-color: #f7fafc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.form-control::placeholder {
+    color: var(--form-placeholder);
+}
+
+/* Textarea */
+textarea.form-control {
+    height: auto;
+    min-height: 120px;
+    padding: 12px 16px;
+    resize: vertical;
+}
+
+/* Select Dropdown */
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a5568' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+    cursor: pointer;
+}
+
+select.form-control:focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+/* ===================================================================
+   INPUT WITH ICONS
+   =================================================================== */
+
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0aec0;
+    font-size: 16px;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.input-group .form-control {
+    padding-left: 44px;
+}
+
+.input-group .form-control:focus ~ .input-icon {
+    color: #667eea;
+}
+
+/* ===================================================================
+   FILE UPLOAD
+   =================================================================== */
+
+.file-upload-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    width: 100%;
+}
+
+.file-upload-input {
+    position: absolute;
+    left: -9999px;
+    opacity: 0;
+}
+
+.file-upload-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    height: var(--input-height);
+    padding: 0 20px;
+    background: #f7fafc;
+    border: 2px dashed var(--form-border);
+    border-radius: var(--input-radius);
+    color: var(--form-label);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-upload-label:hover {
+    background: #edf2f7;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.file-upload-label i {
+    font-size: 18px;
+}
+
+.file-upload-preview {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f7fafc;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--form-label);
+}
+
+.file-upload-preview i {
+    font-size: 20px;
+    color: #667eea;
+}
+
+/* ===================================================================
+   CHECKBOXES & RADIO BUTTONS
+   =================================================================== */
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.form-check-input {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.form-check-label {
+    font-size: 14px;
+    color: var(--form-label);
+    margin-bottom: 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* ===================================================================
+   FORM VALIDATION
+   =================================================================== */
+
+.form-control.is-invalid {
+    border-color: var(--form-error);
+}
+
+.form-control.is-invalid:focus {
+    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+
+.form-control.is-valid {
+    border-color: var(--form-success);
+}
+
+.form-control.is-valid:focus {
+    box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.1);
+}
+
+.invalid-feedback,
+.text-danger {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--form-error);
+    font-weight: 500;
+}
+
+.invalid-feedback i,
+.text-danger i {
+    margin-right: 4px;
+}
+
+.valid-feedback,
+.text-success {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--form-success);
+    font-weight: 500;
+}
+
+.form-text {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #718096;
+}
+
+/* ===================================================================
+   FORM SECTIONS
+   =================================================================== */
+
+.form-section {
+    margin-bottom: 32px;
+    padding: 24px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.form-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--form-text);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-section-title i {
+    color: #667eea;
+}
+
+/* ===================================================================
+   FORM ACTIONS (BUTTONS)
+   =================================================================== */
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 24px;
+    margin-top: 32px;
+    border-top: 2px solid #f7fafc;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 28px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 44px;
+}
+
+.btn i {
+    font-size: 16px;
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+.btn-secondary:hover {
+    background: #cbd5e0;
+}
+
+.btn-success {
+    background: var(--success-gradient);
+    color: white;
+    box-shadow: 0 2px 4px rgba(17, 153, 142, 0.2);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(17, 153, 142, 0.3);
+}
+
+.btn-danger {
+    background: var(--danger-gradient);
+    color: white;
+    box-shadow: 0 2px 4px rgba(250, 112, 154, 0.2);
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(250, 112, 154, 0.3);
+}
+
+.btn-outline {
+    background: transparent;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.btn-outline:hover {
+    background: #667eea;
+    color: white;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ===================================================================
+   ALERT MESSAGES
+   =================================================================== */
+
+.alert {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: start;
+    gap: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.alert i {
+    font-size: 20px;
+    margin-top: 2px;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    color: #166534;
+}
+
+.alert-success i {
+    color: #22c55e;
+}
+
+.alert-danger {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.alert-danger i {
+    color: #ef4444;
+}
+
+.alert-warning {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+}
+
+.alert-warning i {
+    color: #f59e0b;
+}
+
+.alert-info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+
+.alert-info i {
+    color: #3b82f6;
+}
+
+/* ===================================================================
+   RESPONSIVE DESIGN
+   =================================================================== */
+
+@media (max-width: 768px) {
+    .form-container {
+        padding: 24px 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .form-row.three-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .form-title {
+        font-size: 20px;
+    }
+}
+
+/* ===================================================================
+   LOADING STATE
+   =================================================================== */
+
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: btn-spin 0.6s linear infinite;
+}
+
+@keyframes btn-spin {
+    to { transform: rotate(360deg); }
+}

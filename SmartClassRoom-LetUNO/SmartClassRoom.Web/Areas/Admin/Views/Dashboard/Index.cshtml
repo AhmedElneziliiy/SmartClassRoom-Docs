@@ -1,0 +1,276 @@
+@model SmartClassRoom.Web.Services.Interfaces.DashboardStatistics
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["PageTitle"] = "Admin Dashboard";
+    ViewData["PageDescription"] = "Welcome back! Here's what's happening with your classroom today.";
+    ViewData["PageIcon"] = "speedometer2";
+}
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <!-- Students Stat Card -->
+    <div class="stat-card primary">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Total Students</p>
+                <h2 class="stat-card-value">@Model.TotalStudents</h2>
+                <p class="stat-card-subtitle">@Model.ActiveStudents Active</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-mortarboard"></i>
+            </div>
+        </div>
+        <div class="stat-card-progress">
+            <div class="progress">
+                <div class="progress-bar bg-primary" role="progressbar"
+                     style="width: @(Model.TotalStudents > 0 ? (Model.ActiveStudents * 100.0 / Model.TotalStudents) : 0)%">
+                </div>
+            </div>
+            <small class="text-muted">@(Model.TotalStudents > 0 ? Math.Round(Model.ActiveStudents * 100.0 / Model.TotalStudents, 1) : 0)% Active</small>
+        </div>
+        <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-userType="Student" class="stat-card-link">
+            View all students <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    <!-- Teachers Stat Card -->
+    <div class="stat-card success">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Total Teachers</p>
+                <h2 class="stat-card-value">@Model.TotalTeachers</h2>
+                <p class="stat-card-subtitle">@Model.ActiveTeachers Active</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-person-badge"></i>
+            </div>
+        </div>
+        <div class="stat-card-progress">
+            <div class="progress">
+                <div class="progress-bar bg-success" role="progressbar"
+                     style="width: @(Model.TotalTeachers > 0 ? (Model.ActiveTeachers * 100.0 / Model.TotalTeachers) : 0)%">
+                </div>
+            </div>
+            <small class="text-muted">@(Model.TotalTeachers > 0 ? Math.Round(Model.ActiveTeachers * 100.0 / Model.TotalTeachers, 1) : 0)% Active</small>
+        </div>
+        <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-userType="Teacher" class="stat-card-link">
+            View all teachers <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    <!-- Departments Stat Card -->
+    <div class="stat-card info">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Departments</p>
+                <h2 class="stat-card-value">@Model.TotalDepartments</h2>
+                <p class="stat-card-subtitle">@Model.ActiveDepartments Active</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-building"></i>
+            </div>
+        </div>
+        <div class="stat-card-progress">
+            <div class="progress">
+                <div class="progress-bar bg-info" role="progressbar"
+                     style="width: @(Model.TotalDepartments > 0 ? (Model.ActiveDepartments * 100.0 / Model.TotalDepartments) : 0)%">
+                </div>
+            </div>
+            <small class="text-muted">@(Model.TotalDepartments > 0 ? Math.Round(Model.ActiveDepartments * 100.0 / Model.TotalDepartments, 1) : 0)% Active</small>
+        </div>
+        <a asp-area="Admin" asp-controller="Departments" asp-action="Index" class="stat-card-link">
+            View departments <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    <!-- Courses Stat Card -->
+    <div class="stat-card warning">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Courses</p>
+                <h2 class="stat-card-value">@Model.TotalCourses</h2>
+                <p class="stat-card-subtitle">@Model.ActiveCourses Active</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-book"></i>
+            </div>
+        </div>
+        <div class="stat-card-progress">
+            <div class="progress">
+                <div class="progress-bar bg-warning" role="progressbar"
+                     style="width: @(Model.TotalCourses > 0 ? (Model.ActiveCourses * 100.0 / Model.TotalCourses) : 0)%">
+                </div>
+            </div>
+            <small class="text-muted">@(Model.TotalCourses > 0 ? Math.Round(Model.ActiveCourses * 100.0 / Model.TotalCourses, 1) : 0)% Active</small>
+        </div>
+        <a asp-area="Admin" asp-controller="Courses" asp-action="Index" class="stat-card-link">
+            View courses <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Second Row Stats -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    <!-- Today's Sessions -->
+    <div class="stat-card danger">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Today's Sessions</p>
+                <h2 class="stat-card-value">@Model.TodaySessionsCount</h2>
+                <p class="stat-card-subtitle">Scheduled for today</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-calendar-event"></i>
+            </div>
+        </div>
+        <div class="stat-card-footer">
+            <span class="text-muted"><i class="bi bi-calendar3"></i> @DateTime.Now.ToString("MMMM dd, yyyy")</span>
+        </div>
+        <a asp-area="Admin" asp-controller="Timetables" asp-action="Index" class="stat-card-link">
+            View schedule <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    <!-- Active Sessions -->
+    <div class="stat-card" style="--primary-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Active Sessions</p>
+                <h2 class="stat-card-value">@Model.ActiveSessionsCount</h2>
+                <p class="stat-card-subtitle">Currently in progress</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-broadcast"></i>
+            </div>
+        </div>
+        <div class="stat-card-footer">
+            <span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i> Live now</span>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <!-- Attendance Overview Chart -->
+    <div class="col-lg-8">
+        <div class="card chart-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart-fill me-2"></i>Attendance Overview
+                </h5>
+                <div class="btn-group btn-group-sm" role="group" id="attendanceChartPeriod">
+                    <button type="button" class="btn btn-outline-primary active" data-period="7">7 Days</button>
+                    <button type="button" class="btn btn-outline-primary" data-period="30">30 Days</button>
+                    <button type="button" class="btn btn-outline-primary" data-period="90">90 Days</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="attendanceChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Stats Pie Chart -->
+    <div class="col-lg-4">
+        <div class="card chart-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart-fill me-2"></i>Today's Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="attendancePieChart" style="max-height: 250px;"></canvas>
+                <div class="chart-legend mt-3">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #28a745;"></span>
+                        <span class="legend-label">Present</span>
+                        <span class="legend-value" id="presentCount">-</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #ffc107;"></span>
+                        <span class="legend-label">Late</span>
+                        <span class="legend-value" id="lateCount">-</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #dc3545;"></span>
+                        <span class="legend-label">Absent</span>
+                        <span class="legend-value" id="absentCount">-</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #17a2b8;"></span>
+                        <span class="legend-label">Excused</span>
+                        <span class="legend-value" id="excusedCount">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Sessions Table -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-calendar-check me-2"></i>Today's Sessions
+        </h5>
+        <a asp-area="Admin" asp-controller="Timetables" asp-action="Index" class="btn btn-sm btn-outline-primary">
+            View Full Schedule <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div id="todaySessionsContainer">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2">Loading today's sessions...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Card -->
+<div class="quick-actions">
+    <h3 class="quick-actions-header">
+        <i class="bi bi-lightning-fill me-2"></i>Quick Actions
+    </h3>
+    <div class="quick-actions-grid">
+        <a asp-area="Admin" asp-controller="Users" asp-action="Create" class="quick-action-btn primary">
+            <i class="bi bi-person-plus"></i>
+            <span>Add New User</span>
+        </a>
+        <a asp-area="Admin" asp-controller="CourseOfferings" asp-action="Create" class="quick-action-btn success">
+            <i class="bi bi-plus-circle"></i>
+            <span>New Course Offering</span>
+        </a>
+        <a asp-area="Admin" asp-controller="Timetables" asp-action="Create" class="quick-action-btn info">
+            <i class="bi bi-calendar-plus"></i>
+            <span>Create Timetable</span>
+        </a>
+        <a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="quick-action-btn warning">
+            <i class="bi bi-file-earmark-bar-graph"></i>
+            <span>Generate Report</span>
+        </a>
+        <a asp-area="Admin" asp-controller="Departments" asp-action="Index" class="quick-action-btn secondary">
+            <i class="bi bi-building"></i>
+            <span>View Departments</span>
+        </a>
+        <a asp-area="Admin" asp-controller="Courses" asp-action="Index" class="quick-action-btn secondary">
+            <i class="bi bi-journal"></i>
+            <span>View Courses</span>
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Dashboard JavaScript -->
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+}
+
+@section Styles {
+    <!-- Dashboard Styles -->
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+}

@@ -1,0 +1,181 @@
+/**
+ * Attendances CSS Styles
+ * Styles for the attendances management page
+ */
+
+/* Status Breakdown in Stat Card */
+.status-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.status-item i {
+    font-size: 1rem;
+}
+
+/* Verification Breakdown in Stat Card */
+.verification-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.verification-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.verification-item i {
+    font-size: 1.25rem;
+}
+
+.verification-face {
+    color: #667eea;
+}
+
+.verification-manual {
+    color: #17a2b8;
+}
+
+.verification-esp32 {
+    color: #28a745;
+}
+
+/* Session Performance Lists */
+.top-session-item {
+    border-left: 4px solid #28a745;
+    transition: all 0.2s ease;
+}
+
+.top-session-item:hover {
+    background-color: #f0f9f4;
+    transform: translateX(2px);
+}
+
+.at-risk-session-item {
+    border-left: 4px solid #dc3545;
+    background-color: #fff5f5;
+    transition: all 0.2s ease;
+}
+
+.at-risk-session-item:hover {
+    background-color: #ffe5e5;
+    transform: translateX(2px);
+}
+
+.attendance-rate-high {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.attendance-rate-low {
+    color: #dc3545;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* Filter Section */
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+/* Attendance Table */
+.attendance-table {
+    font-size: 0.9rem;
+}
+
+.attendance-row {
+    transition: all 0.2s ease;
+}
+
+.attendance-row:hover {
+    background-color: #f8f9fa;
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.student-type {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.teacher-type {
+    color: #fd7e14;
+    font-weight: 600;
+}
+
+/* Status Badges */
+.status-badge-present {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.status-badge-absent {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.status-badge-late {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.status-badge-excused {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .status-breakdown,
+    .verification-breakdown {
+        font-size: 0.75rem;
+    }
+
+    .attendance-table {
+        font-size: 0.8rem;
+    }
+
+    .top-session-item,
+    .at-risk-session-item {
+        font-size: 0.85rem;
+    }
+}

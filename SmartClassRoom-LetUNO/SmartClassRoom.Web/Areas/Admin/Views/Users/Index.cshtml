@@ -1,0 +1,342 @@
+@model IEnumerable<ApplicationUser>
+@using SmartClassRoom.Web.Models.ViewModels.Common
+@addTagHelper *, SmartClassRoom.Web
+@{
+    ViewData["Title"] = "Users";
+    ViewData["PageTitle"] = "User Management";
+    ViewData["PageDescription"] = "Manage all system users including students, teachers, and administrators.";
+    ViewData["PageIcon"] = "people";
+}
+
+@section PageActions {
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-person-plus"></i> Add New User
+    </a>
+}
+
+<!-- Statistics Cards -->
+<div class="stats-grid mb-4">
+    <!-- Total Users Card -->
+    <div class="stat-card primary">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Total Users</p>
+                <h2 class="stat-card-value">@ViewBag.TotalUsers</h2>
+                <p class="stat-card-subtitle">@ViewBag.ActiveUsers Active</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-people"></i>
+            </div>
+        </div>
+        <div class="stat-card-progress">
+            <div class="progress">
+                <div class="progress-bar bg-primary" role="progressbar"
+                     style="width: @(ViewBag.TotalUsers > 0 ? (ViewBag.ActiveUsers * 100.0 / ViewBag.TotalUsers) : 0)%">
+                </div>
+            </div>
+            <small class="text-muted">@(ViewBag.TotalUsers > 0 ? Math.Round(ViewBag.ActiveUsers * 100.0 / ViewBag.TotalUsers, 1) : 0)% Active Rate</small>
+        </div>
+    </div>
+
+    <!-- Students Card -->
+    <div class="stat-card success">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Students</p>
+                <h2 class="stat-card-value">@ViewBag.TotalStudents</h2>
+                <p class="stat-card-subtitle">@ViewBag.StudentsActive Active</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-mortarboard"></i>
+            </div>
+        </div>
+        <div class="stat-card-progress">
+            <div class="progress">
+                <div class="progress-bar bg-success" role="progressbar"
+                     style="width: @(ViewBag.TotalStudents > 0 ? (ViewBag.StudentsActive * 100.0 / ViewBag.TotalStudents) : 0)%">
+                </div>
+            </div>
+            <small class="text-muted">@(ViewBag.TotalStudents > 0 ? Math.Round(ViewBag.StudentsActive * 100.0 / ViewBag.TotalStudents, 1) : 0)% Active</small>
+        </div>
+    </div>
+
+    <!-- Teachers Card -->
+    <div class="stat-card info">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Teachers</p>
+                <h2 class="stat-card-value">@ViewBag.TotalTeachers</h2>
+                <p class="stat-card-subtitle">@ViewBag.TeachersActive Active</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-person-badge"></i>
+            </div>
+        </div>
+        <div class="stat-card-progress">
+            <div class="progress">
+                <div class="progress-bar bg-info" role="progressbar"
+                     style="width: @(ViewBag.TotalTeachers > 0 ? (ViewBag.TeachersActive * 100.0 / ViewBag.TotalTeachers) : 0)%">
+                </div>
+            </div>
+            <small class="text-muted">@(ViewBag.TotalTeachers > 0 ? Math.Round(ViewBag.TeachersActive * 100.0 / ViewBag.TotalTeachers, 1) : 0)% Active</small>
+        </div>
+    </div>
+
+    <!-- Inactive Users Card -->
+    <div class="stat-card warning">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Inactive Users</p>
+                <h2 class="stat-card-value">@ViewBag.InactiveUsers</h2>
+                <p class="stat-card-subtitle">Need Attention</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-exclamation-circle"></i>
+            </div>
+        </div>
+        <div class="stat-card-progress">
+            <div class="progress">
+                <div class="progress-bar bg-warning" role="progressbar"
+                     style="width: @(ViewBag.TotalUsers > 0 ? (ViewBag.InactiveUsers * 100.0 / ViewBag.TotalUsers) : 0)%">
+                </div>
+            </div>
+            <small class="text-muted">@(ViewBag.TotalUsers > 0 ? Math.Round(ViewBag.InactiveUsers * 100.0 / ViewBag.TotalUsers, 1) : 0)% of Total</small>
+        </div>
+    </div>
+</div>
+
+<!-- User Distribution Chart -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>User Type Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="userTypeChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart me-2"></i>User Status Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="userStatusChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="filter-form">
+            <!-- Hidden fields to preserve sorting -->
+            <input type="hidden" name="sortBy" value="@ViewBag.CurrentSort" />
+            <input type="hidden" name="ascending" value="@ViewBag.SortAscending" />
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Role</label>
+                    <select name="role" class="form-select">
+                        <option value="">All Roles</option>
+                        @foreach (var role in ViewBag.Roles as IEnumerable<string>)
+                        {
+                            <option value="@role" selected="@(ViewBag.SelectedRole == role)">@role</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">User Type</label>
+                    <select name="userType" class="form-select">
+                        <option value="">All Types</option>
+                        <option value="Student" selected="@(ViewBag.SelectedUserType == "Student")">Student</option>
+                        <option value="Teacher" selected="@(ViewBag.SelectedUserType == "Teacher")">Teacher</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="isActive" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="true" selected="@(ViewBag.SelectedIsActive == true)">Active</option>
+                        <option value="false" selected="@(ViewBag.SelectedIsActive == false)">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Users Table Card -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th asp-sortable-column="Name" asp-column-display="User"></th>
+                            <th asp-sortable-column="Email" asp-column-display="Email"></th>
+                            <th asp-sortable-column="UserType" asp-column-display="Type"></th>
+                            <th asp-sortable-column="Status" asp-column-display="Status"></th>
+                            <th asp-sortable-column="Created" asp-column-display="Created"></th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            var userInitials = string.Join("", (user.FullName ?? user.UserName ?? "U").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(n => n.FirstOrDefault()).Take(2));
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar-sm @user.UserType?.ToLower()">@userInitials</div>
+                                        <div class="user-info-sm">
+                                            <div class="user-name-sm">@user.FullName</div>
+                                            <div class="user-username">@user.UserName</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-muted">
+                                        <i class="bi bi-envelope me-1"></i>@user.Email
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (user.UserType == "Student")
+                                    {
+                                        <span class="badge badge-student">
+                                            <i class="bi bi-mortarboard me-1"></i>Student
+                                        </span>
+                                    }
+                                    else if (user.UserType == "Teacher")
+                                    {
+                                        <span class="badge badge-teacher">
+                                            <i class="bi bi-person-badge me-1"></i>Teacher
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-admin">
+                                            <i class="bi bi-shield-check me-1"></i>Admin
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (user.IsActive)
+                                    {
+                                        <span class="status-badge active">
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge inactive">
+                                            <i class="bi bi-x-circle me-1"></i>Inactive
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i>@user.CreatedAt.ToString("MMM dd, yyyy")
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a asp-action="Details" asp-route-id="@user.Id" class="action-btn info" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@user.Id" class="action-btn warning" title="Edit User">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="UploadFacePhoto" asp-route-id="@user.Id" class="action-btn primary" title="Upload Face Photo">
+                                            <i class="bi bi-person-bounding-box"></i>
+                                        </a>
+                                        <form asp-action="ResetPassword" asp-route-id="@user.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="action-btn secondary" title="Reset Password to Default (Pass@123)"
+                                                    onclick="return confirm('Reset password to default (Pass@123)?')">
+                                                <i class="bi bi-key"></i>
+                                            </button>
+                                        </form>
+                                        @if (user.IsActive)
+                                        {
+                                            <form asp-action="Deactivate" asp-route-id="@user.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn danger" title="Deactivate User"
+                                                        onclick="return confirm('Are you sure you want to deactivate this user?')">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Activate" asp-route-id="@user.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn success" title="Activate User">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.Pagination != null)
+            {
+                @await Html.PartialAsync("_Pagination", ViewBag.Pagination as PaginationViewModel)
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-people"></i>
+                <h4>No Users Found</h4>
+                <p>No users match your current filter criteria. Try adjusting your filters or add a new user.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Add First User
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Users Charts JavaScript -->
+    <script src="~/js/users-charts.js" asp-append-version="true"></script>
+
+    <script>
+        // Initialize charts with data from ViewBag
+        if (typeof UsersCharts !== 'undefined') {
+            UsersCharts.init({
+                totalStudents: @ViewBag.TotalStudents,
+                totalTeachers: @ViewBag.TotalTeachers,
+                activeUsers: @ViewBag.ActiveUsers,
+                inactiveUsers: @ViewBag.InactiveUsers,
+                studentsActive: @ViewBag.StudentsActive,
+                teachersActive: @ViewBag.TeachersActive
+            });
+        }
+    </script>
+}

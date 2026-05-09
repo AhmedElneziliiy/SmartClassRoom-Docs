@@ -1,0 +1,522 @@
+@model SmartClassRoom.Web.Models.Entities.Scheduling.Timetable
+@{
+    ViewData["Title"] = $"Timetable - {Model.Name}";
+    ViewData["PageTitle"] = Model.Name;
+    ViewData["PageIcon"] = "table";
+    ViewData["PageDescription"] = $"{Model.Department?.Name} - {Model.Level?.Name} {Model.Section?.Name}";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+    var hasConflicts = ViewBag.HasConflicts as bool? ?? false;
+    var conflicts = ViewBag.Conflicts as List<SmartClassRoom.Web.Models.ViewModels.Timetables.ConflictInfo> ?? new List<SmartClassRoom.Web.Models.ViewModels.Timetables.ConflictInfo>();
+}
+
+@section PageActions {
+    <a asp-area="Admin" asp-controller="Timetables" asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+    @if (Model.Status != "Published")
+    {
+        <form asp-area="Admin" asp-controller="Timetables" asp-action="Publish" asp-route-id="@Model.Id" method="post" class="d-inline"
+              onsubmit="return confirm('Are you sure you want to publish this timetable? This will create all sessions for the term.');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-success" @(hasConflicts ? "disabled" : "")>
+                <i class="bi bi-check-circle"></i> Publish Timetable
+            </button>
+        </form>
+    }
+    @if (hasConflicts)
+    {
+        <a asp-area="Admin" asp-controller="Timetables" asp-action="Conflicts" asp-route-id="@Model.Id" class="btn btn-warning">
+            <i class="bi bi-exclamation-triangle"></i> View Conflicts (@conflicts.Count)
+        </a>
+    }
+}
+
+<!-- Status and Info Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-range text-primary" style="font-size: 2rem;"></i>
+                <h6 class="mt-2 mb-1">Term</h6>
+                <p class="text-muted mb-0">@Model.Term?.Name</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar3 text-success" style="font-size: 2rem;"></i>
+                <h6 class="mt-2 mb-1">Total Slots</h6>
+                <p class="text-muted mb-0">@Model.ScheduledSlots.Count() slots</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                @if (hasConflicts)
+                {
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
+                    <h6 class="mt-2 mb-1">Conflicts</h6>
+                    <p class="text-danger mb-0">@conflicts.Count conflicts</p>
+                }
+                else
+                {
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                    <h6 class="mt-2 mb-1">Conflicts</h6>
+                    <p class="text-success mb-0">No conflicts</p>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                @if (Model.Status == "Published")
+                {
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                    <h6 class="mt-2 mb-1">Status</h6>
+                    <p class="text-success mb-0">Published</p>
+                }
+                else if (Model.Status == "Draft")
+                {
+                    <i class="bi bi-pencil-square text-warning" style="font-size: 2rem;"></i>
+                    <h6 class="mt-2 mb-1">Status</h6>
+                    <p class="text-warning mb-0">Draft</p>
+                }
+                else
+                {
+                    <i class="bi bi-archive text-secondary" style="font-size: 2rem;"></i>
+                    <h6 class="mt-2 mb-1">Status</h6>
+                    <p class="text-muted mb-0">@Model.Status</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (hasConflicts)
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Conflicts Detected!</strong> This timetable has @conflicts.Count conflict(s).
+        <a asp-area="Admin" asp-controller="Timetables" asp-action="Conflicts" asp-route-id="@Model.Id" class="alert-link">View detailed conflict report</a>
+        to resolve them before publishing.
+    </div>
+}
+
+<!-- Calendar View -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-calendar-week me-2"></i>Weekly Timetable
+        </h5>
+    </div>
+    <div class="card-body">
+        <div id="calendar"
+             data-update-slot-url="@Url.Action("UpdateSlot")"
+             data-delete-slot-url="@Url.Action("DeleteSlot")"></div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="card mt-3">
+    <div class="card-body">
+        <h6 class="card-title">Legend</h6>
+        <div class="d-flex gap-3 flex-wrap">
+            <span><i class="bi bi-circle-fill text-primary"></i> Regular Course</span>
+            <span><i class="bi bi-circle-fill text-danger"></i> Conflicted Slot</span>
+            @if (Model.Status != "Published")
+            {
+                <span><i class="bi bi-grip-vertical"></i> Drag to reschedule | Click to delete</span>
+            }
+        </div>
+    </div>
+</div>
+
+@* Anti-forgery token for AJAX requests *@
+@Html.AntiForgeryToken()
+
+@section Styles {
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
+    <style>
+        #calendar {
+            max-width: 100%;
+            height: 800px;
+        }
+
+        .fc-timegrid-slot {
+            height: 60px !important;
+        }
+
+        .fc-event {
+            cursor: move;
+            padding: 6px !important;
+            border-radius: 4px !important;
+        }
+
+        .fc-event-title {
+            font-weight: 600;
+        }
+
+        .fc-event-main {
+            padding: 4px 6px !important;
+            line-height: 1.3 !important;
+            height: 100%;
+        }
+
+        .fc-event .fc-event-main-frame {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            height: 100%;
+        }
+
+        .fc-timegrid-event {
+            overflow: hidden !important;
+        }
+
+        .fc-timegrid-event-harness {
+            margin: 0 !important;
+        }
+
+        .fc-timegrid-col {
+            min-width: 150px;
+        }
+
+        .fc-timegrid-event .fc-event-time {
+            display: none !important;
+        }
+
+        .fc-event.conflict {
+            border-color: #dc3545 !important;
+            background-color: #dc3545 !important;
+        }
+
+        .fc-toolbar-title {
+            font-size: 1.5rem !important;
+        }
+
+        .fc-daygrid-day-number {
+            font-size: 1.1rem;
+            padding: 8px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var timetableId = @Model.Id;
+            var isPublished = '@Model.Status' === 'Published';
+            var conflicts = @Html.Raw(Json.Serialize(conflicts.Select(c => new { c.DayOfWeek, StartTime = c.StartTime.ToString(@"hh\:mm"), EndTime = c.EndTime.ToString(@"hh\:mm") })));
+
+            // Get events from server (passed via ViewBag)
+            var serverEvents = @Html.Raw(Json.Serialize(ViewBag.Events));
+
+            // Get URLs from data attributes
+            var updateSlotUrl = calendarEl.getAttribute('data-update-slot-url');
+            var deleteSlotUrl = calendarEl.getAttribute('data-delete-slot-url');
+
+            console.log('========== INITIAL LOAD ==========');
+            console.log('Total events from ViewBag:', serverEvents.length);
+            if (serverEvents.length > 0) {
+                console.log('First event from server:', serverEvents[0]);
+            }
+            console.log('==================================');
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                firstDay: 6, // Start week on Saturday
+                initialDate: '@ViewBag.TermStartDate', // Show term start week
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'timeGridWeek,listWeek'
+                },
+                slotMinTime: '@ViewBag.StartTime', // Use configured start time
+                slotMaxTime: '@ViewBag.EndTime',   // Use configured end time
+                slotDuration: '00:@ViewBag.SlotDuration:00',
+                slotLabelInterval: '00:@ViewBag.SlotDuration:00',
+                snapDuration: '00:@ViewBag.SlotDuration:00',
+                expandRows: true,
+                contentHeight: 'auto',
+                hiddenDays: [5], // Always hide Friday - show Saturday through Thursday
+                allDaySlot: false,
+                // Add visual styling for non-working days
+                dayHeaderContent: function(args) {
+                    const dayName = args.date.toLocaleDateString('en-US', { weekday: 'long' });
+                    const selectedDays = @Html.Raw(Json.Serialize(ViewBag.SelectedWorkingDays ?? new List<string>()));
+
+                    if (!selectedDays.includes(dayName)) {
+                        // Non-working day - show grayed out
+                        return { html: `<span style="color: #999; font-style: italic;">${dayName}</span>` };
+                    }
+                    return dayName;
+                },
+                editable: !isPublished,
+                droppable: !isPublished,
+                eventDurationEditable: false,
+                eventOverlap: true, // Allow overlap so events don't interact
+                slotEventOverlap: true,
+                eventConstraint: null, // No constraints
+                selectConstraint: null,
+                displayEventTime: false,
+                eventStartEditable: !isPublished,
+                // Use events directly from ViewBag (no AJAX)
+                events: serverEvents.map(event => {
+                    var processed = {
+                        id: String(event.id),
+                        title: event.title,
+                        start: new Date(event.start), // Convert string to Date
+                        end: new Date(event.end),     // Convert string to Date
+                        groupId: null,
+                        editable: !isPublished,
+                        startEditable: !isPublished,
+                        durationEditable: false,
+                        resourceEditable: false,
+                        extendedProps: {
+                            slotId: event.slotId,
+                            courseOfferingId: event.courseOfferingId,
+                            courseName: event.courseName,
+                            courseCode: event.courseCode,
+                            teacherName: event.teacherName,
+                            roomId: event.roomId,
+                            roomNumber: event.roomNumber,
+                            roomName: event.roomName,
+                            dayOfWeek: event.dayOfWeek,
+                            startTime: event.startTime,
+                            endTime: event.endTime
+                        }
+                    };
+
+                    console.log(`Processing event ${event.id}: ${event.courseName} on ${event.dayOfWeek} at ${event.startTime}, Start: ${processed.start}, End: ${processed.end}`);
+
+                    return processed;
+                }),
+                eventContent: function(arg) {
+                    // Custom rendering to show course, teacher, and room
+                    let arrayOfDomNodes = [];
+
+                    // Course name
+                    let courseDiv = document.createElement('div');
+                    courseDiv.style.fontWeight = 'bold';
+                    courseDiv.style.fontSize = '0.75em';
+                    courseDiv.style.marginBottom = '2px';
+                    courseDiv.innerHTML = arg.event.extendedProps.courseName || arg.event.title;
+
+                    // Teacher name
+                    let teacherDiv = document.createElement('div');
+                    teacherDiv.style.fontSize = '0.65em';
+                    teacherDiv.style.marginBottom = '1px';
+                    teacherDiv.innerHTML = 'Dr: ' + (arg.event.extendedProps.teacherName || 'TBD');
+
+                    // Room
+                    let roomDiv = document.createElement('div');
+                    roomDiv.style.fontSize = '0.65em';
+                    roomDiv.innerHTML = 'Room: ' + (arg.event.extendedProps.roomNumber || 'TBD');
+
+                    arrayOfDomNodes.push(courseDiv);
+                    arrayOfDomNodes.push(teacherDiv);
+                    arrayOfDomNodes.push(roomDiv);
+
+                    return { domNodes: arrayOfDomNodes };
+                },
+                eventDidMount: function(info) {
+                    // Check if event has conflicts
+                    var hasConflict = conflicts.some(c =>
+                        c.DayOfWeek === info.event.extendedProps.dayOfWeek &&
+                        c.StartTime === info.event.extendedProps.startTime &&
+                        c.EndTime === info.event.extendedProps.endTime
+                    );
+
+                    if (hasConflict) {
+                        info.el.classList.add('conflict');
+                    }
+
+                    // Add tooltip
+                    var props = info.event.extendedProps;
+                    info.el.title = `${props.courseName || info.event.title}\nCode: ${props.courseCode || ''}\nTeacher: ${props.teacherName || 'TBD'}\nRoom: ${props.roomNumber || 'TBD'}\nTime: ${props.startTime || ''} - ${props.endTime || ''}`;
+                },
+                eventDragStart: function(info) {
+                    // Store the ID of the event being dragged
+                    window.draggedEventId = info.event.id;
+                },
+                eventDrop: function(info) {
+                    console.log('========== EVENT DROPPED ==========');
+                    console.log('Dropped event ID:', info.event.id);
+                    console.log('Old position:', info.oldEvent.start);
+                    console.log('New position:', info.event.start);
+
+                    if (isPublished) {
+                        info.revert();
+                        delete window.draggedEventId;
+                        alert('Cannot edit a published timetable');
+                        return;
+                    }
+
+                    // Get the dropped event
+                    var draggedEvent = info.event;
+                    var dropTime = info.event.start;
+
+                    // Check if dropping on another event (swap mode)
+                    var allEvents = calendar.getEvents();
+                    var overlappingEvent = allEvents.find(e =>
+                        e.id !== draggedEvent.id &&
+                        e.start.getTime() === dropTime.getTime()
+                    );
+
+                    if (overlappingEvent) {
+                        // SWAP MODE: Ask user to confirm swap
+                        if (confirm('Swap "' + draggedEvent.title + '" with "' + overlappingEvent.title + '"?')) {
+                            var swapUrl = '@Url.Action("SwapSlots", "Timetables")';
+
+                            fetch(swapUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    slot1Id: parseInt(draggedEvent.extendedProps.slotId),
+                                    slot2Id: parseInt(overlappingEvent.extendedProps.slotId),
+                                    timetableId: @Model.Id
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    location.reload(); // Reload to show swapped positions
+                                } else {
+                                    alert('Error: ' + data.message);
+                                    info.revert();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('An error occurred while swapping slots.');
+                                info.revert();
+                            });
+                        } else {
+                            info.revert();
+                        }
+                    } else {
+                        // NORMAL MOVE MODE: Move to empty slot
+                        var newDay = info.event.start.toLocaleDateString('en-US', { weekday: 'long' });
+                        var hours = info.event.start.getHours().toString().padStart(2, '0');
+                        var minutes = info.event.start.getMinutes().toString().padStart(2, '0');
+                        var newStartTime = hours + ':' + minutes + ':00';
+
+                        var endHours = info.event.end.getHours().toString().padStart(2, '0');
+                        var endMinutes = info.event.end.getMinutes().toString().padStart(2, '0');
+                        var newEndTime = endHours + ':' + endMinutes + ':00';
+
+                        var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                        var slotId = parseInt(info.event.id);
+                        var props = info.event.extendedProps;
+
+                        fetch(updateSlotUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': token,
+                                'RequestVerificationToken': token
+                            },
+                            body: JSON.stringify({
+                                slotId: slotId,
+                                dayOfWeek: newDay,
+                                startTime: newStartTime,
+                                endTime: newEndTime,
+                                roomId: props.roomId || null
+                            })
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (!data.success) {
+                                alert(data.message || 'Failed to update slot');
+                                info.revert();
+                            } else {
+                                location.reload();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            info.revert();
+                            alert('Failed to update slot: ' + error.message);
+                        });
+                    }
+                },
+                eventClick: function(info) {
+                    if (isPublished) {
+                        alert('This timetable is published. Cannot edit slots.');
+                        return;
+                    }
+
+                    console.log('========== DELETE CLICKED ==========');
+                    console.log('Clicked event:', info.event);
+                    console.log('Event ID:', info.event.id);
+                    console.log('Event title:', info.event.title);
+                    console.log('Event start:', info.event.start);
+                    console.log('Event extendedProps:', info.event.extendedProps);
+
+                    // Count all events with same course name
+                    var allEvents = calendar.getEvents();
+                    var sameCourseName = allEvents.filter(e => e.extendedProps.courseName === info.event.extendedProps.courseName);
+                    console.log(`Total events for ${info.event.extendedProps.courseName}:`, sameCourseName.length);
+                    sameCourseName.forEach((e, i) => {
+                        console.log(`  ${i}: ID=${e.id}, Day=${e.extendedProps.dayOfWeek}, Time=${e.extendedProps.startTime}`);
+                    });
+                    console.log('====================================');
+
+                    var props = info.event.extendedProps;
+                    if (confirm(`Delete this slot?\n\n${props.courseName || info.event.title}\nDr: ${props.teacherName || 'TBD'}\n${props.dayOfWeek || ''} ${props.startTime || ''}-${props.endTime || ''}`)) {
+                        var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                        var slotId = parseInt(info.event.id); // ID is now just the numeric slot ID
+
+                        console.log('========== SENDING DELETE REQUEST ==========');
+                        console.log('Deleting slot ID:', slotId);
+                        console.log('Delete URL:', deleteSlotUrl + '/' + slotId);
+                        console.log('============================================');
+
+                        fetch(deleteSlotUrl + '/' + slotId, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': token,
+                                'RequestVerificationToken': token
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('========== DELETE RESPONSE ==========');
+                            console.log('Response:', data);
+                            console.log('====================================');
+
+                            if (data.success) {
+                                console.log('Delete successful, reloading page...');
+                                // Reload page to get updated events from server
+                                location.reload();
+                            } else {
+                                alert(data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Failed to delete slot');
+                        });
+                    }
+                }
+            });
+
+            calendar.render();
+        });
+    </script>
+}

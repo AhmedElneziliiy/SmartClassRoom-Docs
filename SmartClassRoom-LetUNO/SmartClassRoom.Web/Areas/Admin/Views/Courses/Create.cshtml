@@ -1,0 +1,131 @@
+@model SmartClassRoom.Web.Models.ViewModels.Courses.CreateCourseRequest
+
+@{
+    ViewData["Title"] = "Create Course";
+    ViewData["PageTitle"] = "Create Course";
+    ViewData["PageIcon"] = "journal";
+    ViewData["PageDescription"] = "Add a new course to the system";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="card form-card">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-info-circle"></i> Basic Information
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Code" class="form-label"></label>
+                        <input asp-for="Code" class="form-control" placeholder="Enter course code (e.g., CS101)" />
+                        <span asp-validation-for="Code" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" placeholder="Enter course name" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter course description"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Details Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-star"></i> Course Details
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Credits" class="form-label"></label>
+                        <input asp-for="Credits" class="form-control" type="number" min="1" max="10" />
+                        <span asp-validation-for="Credits" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="CourseType" class="form-label"></label>
+                        <select asp-for="CourseType" class="form-select" asp-items="ViewBag.CourseTypes">
+                            <option value="">-- Select Course Type --</option>
+                        </select>
+                        <span asp-validation-for="CourseType" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Assignment Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-diagram-3"></i> Academic Assignment
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="DepartmentId" class="form-label"></label>
+                        <select asp-for="DepartmentId" class="form-select" asp-items="ViewBag.Departments">
+                            <option value="">-- Select Department --</option>
+                        </select>
+                        <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="PrerequisiteCourseId" class="form-label"></label>
+                        <select asp-for="PrerequisiteCourseId" class="form-select" asp-items="ViewBag.PrerequisiteCourses">
+                            <option value="">-- No Prerequisite --</option>
+                        </select>
+                        <span asp-validation-for="PrerequisiteCourseId" class="text-danger"></span>
+                        <small class="form-text text-muted">Optional: Select a course that must be completed before this one</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-toggle-on"></i> Status
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <div class="form-check">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsActive" class="form-check-label"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Create Course
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

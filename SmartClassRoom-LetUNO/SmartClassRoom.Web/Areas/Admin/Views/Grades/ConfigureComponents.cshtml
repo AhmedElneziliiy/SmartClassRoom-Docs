@@ -1,0 +1,268 @@
+@using SmartClassRoom.Web.Models.ViewModels.Grading
+@{
+    ViewData["Title"] = "Configure Grade Components";
+    var offering = ViewBag.Offering as SmartClassRoom.Web.Models.Entities.Academic.CourseOffering;
+    var templates = ViewBag.Templates as IEnumerable<GradeComponentTemplateDto>;
+    var components = ViewBag.Components as IEnumerable<GradeComponentDto>;
+    var hasExistingGrades = (bool)(ViewBag.HasExistingGrades ?? false);
+    var existingGradesCount = (int)(ViewBag.ExistingGradesCount ?? 0);
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <h2>Configure Grade Components</h2>
+            <p class="text-muted">@offering.Course.Code - @offering.Course.Name (@offering.Term.Name)</p>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (hasExistingGrades)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Warning:</strong> This course offering has @existingGradesCount existing grade(s).
+            Saving new components will delete all existing grades! Students will need to be re-graded.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Grade Components</h5>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#templateModal">
+                            <i class="bi bi-folder"></i> Load Template
+                        </button>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="addComponent()">
+                            <i class="bi bi-plus-circle"></i> Add Component
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="componentsForm" asp-action="SaveComponents" method="post">
+                        <input type="hidden" name="offeringId" value="@offering.Id" />
+
+                        <div id="componentsContainer">
+                            <!-- Components will be added here dynamically -->
+                        </div>
+
+                        <div class="mt-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Total Weight:</strong> <span id="totalWeight" class="text-danger">0</span>%
+                                    <span id="weightWarning" class="text-danger ms-2" style="display: none;">
+                                        Must equal 100%
+                                    </span>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button type="submit" class="btn btn-success" id="saveBtn" disabled>
+                                        <i class="bi bi-save"></i> Save Components
+                                    </button>
+                                    <a asp-action="GradeSheet" asp-route-id="@offering.Id" class="btn btn-secondary">Cancel</a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <ol class="small">
+                        <li>Add grade components (e.g., Midterm, Final, Assignment)</li>
+                        <li>Assign weight percentages (must total 100%)</li>
+                        <li>Set maximum score for each component</li>
+                        <li>Save components before entering grades</li>
+                    </ol>
+                    <hr />
+                    <h6>Grade Scale:</h6>
+                    <ul class="small mb-0">
+                        <li>A: 90-100% (4.0)</li>
+                        <li>B+: 85-89% (3.3)</li>
+                        <li>B: 80-84% (3.0)</li>
+                        <li>C+: 75-79% (2.3)</li>
+                        <li>C: 70-74% (2.0)</li>
+                        <li>D: 60-69% (1.0)</li>
+                        <li>F: <60% (0.0)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Modal -->
+<div class="modal fade" id="templateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Load Component Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                @if (templates != null && templates.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var template in templates)
+                        {
+                            <button type="button" class="list-group-item list-group-item-action" onclick="loadTemplate(@template.Id)">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@template.TemplateName</h6>
+                                    <small>@template.ComponentCount components</small>
+                                </div>
+                                @if (!string.IsNullOrEmpty(template.Description))
+                                {
+                                    <p class="mb-1 small text-muted">@template.Description</p>
+                                }
+                            </button>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">No templates available</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let componentIndex = 0;
+        const templatesData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(templates));
+        const hasExistingGrades = @Html.Raw(hasExistingGrades.ToString().ToLower());
+        const existingGradesCount = @existingGradesCount;
+
+        // Load existing components
+        const existingComponents = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(components));
+        existingComponents.forEach(comp => {
+            addComponent(comp);
+        });
+
+        // Add form submit confirmation if there are existing grades
+        document.getElementById('componentsForm').addEventListener('submit', function(e) {
+            if (hasExistingGrades) {
+                e.preventDefault();
+                if (confirm(`WARNING: This will delete ${existingGradesCount} existing grade(s)!\n\nAll students will need to be re-graded. Are you sure you want to continue?`)) {
+                    this.submit();
+                }
+            }
+        });
+
+        function addComponent(data = null) {
+            const container = document.getElementById('componentsContainer');
+            const index = componentIndex++;
+
+            const html = `
+                <div class="card mb-2 component-card" id="component-${index}">
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label small">Component Name</label>
+                                <input type="text" name="components[${index}].ComponentName" class="form-control form-control-sm"
+                                       value="${data?.componentName || ''}" required />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Weight (%)</label>
+                                <input type="number" name="components[${index}].Weight" class="form-control form-control-sm weight-input"
+                                       value="${data?.weight || ''}" step="0.01" min="0.01" max="100" required onchange="updateTotalWeight()" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Max Score</label>
+                                <input type="number" name="components[${index}].MaxScore" class="form-control form-control-sm"
+                                       value="${data?.maxScore || 100}" step="0.01" min="1" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Description</label>
+                                <input type="text" name="components[${index}].Description" class="form-control form-control-sm"
+                                       value="${data?.description || ''}" />
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="removeComponent(${index})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" name="components[${index}].OrderIndex" value="${index}" />
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', html);
+            updateTotalWeight();
+        }
+
+        function removeComponent(index) {
+            document.getElementById(`component-${index}`).remove();
+            updateTotalWeight();
+        }
+
+        function updateTotalWeight() {
+            const weights = document.querySelectorAll('.weight-input');
+            let total = 0;
+            weights.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+
+            const totalSpan = document.getElementById('totalWeight');
+            const warningSpan = document.getElementById('weightWarning');
+            const saveBtn = document.getElementById('saveBtn');
+
+            totalSpan.textContent = total.toFixed(2);
+
+            if (Math.abs(total - 100) < 0.01) {
+                totalSpan.classList.remove('text-danger');
+                totalSpan.classList.add('text-success');
+                warningSpan.style.display = 'none';
+                saveBtn.disabled = false;
+            } else {
+                totalSpan.classList.remove('text-success');
+                totalSpan.classList.add('text-danger');
+                warningSpan.style.display = 'inline';
+                saveBtn.disabled = true;
+            }
+        }
+
+        function loadTemplate(templateId) {
+            const template = templatesData.find(t => t.id === templateId);
+            if (!template) return;
+
+            // Clear existing components
+            document.getElementById('componentsContainer').innerHTML = '';
+            componentIndex = 0;
+
+            // Add template components
+            template.components.forEach(comp => {
+                addComponent(comp);
+            });
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('templateModal'));
+            modal.hide();
+        }
+    </script>
+}

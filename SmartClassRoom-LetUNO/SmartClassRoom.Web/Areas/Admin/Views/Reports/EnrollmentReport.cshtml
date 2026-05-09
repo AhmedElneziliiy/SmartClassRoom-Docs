@@ -1,0 +1,171 @@
+@{
+    ViewData["Title"] = "Enrollment Report";
+    ViewData["PageTitle"] = "Enrollment Report";
+    ViewData["PageDescription"] = "Generate comprehensive enrollment statistics report";
+    ViewData["PageIcon"] = "clipboard-data";
+}
+
+<div class="card">
+    <div class="card-header bg-info text-dark">
+        <h5 class="mb-0">
+            <i class="bi bi-clipboard-data me-2"></i>
+            Generate Enrollment Report
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6 class="text-muted">Report Options</h6>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Select a specific term or generate a report for all terms. The report includes enrollment statistics for all course offerings.
+                </div>
+            </div>
+            <div class="col-md-6">
+                <form method="get" asp-action="GenerateEnrollmentPdf">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Term (Optional)</label>
+                        <select name="termId" class="form-select form-select-lg">
+                            <option value="">All Terms</option>
+                            @foreach (var term in ViewBag.Terms as IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Term>)
+                            {
+                                <option value="@term.Id" selected="@(ViewBag.SelectedTermId == term.Id)">
+                                    @term.Name
+                                </option>
+                            }
+                        </select>
+                        <small class="text-muted">Leave blank to include all terms</small>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-file-pdf me-2"></i>
+                            Download PDF Report
+                        </button>
+                        <button type="submit"
+                                formaction="@Url.Action("GenerateEnrollmentExcel")"
+                                class="btn btn-success btn-lg">
+                            <i class="bi bi-file-excel me-2"></i>
+                            Download Excel Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title">Report Contents</h6>
+        <p class="text-muted">The enrollment report will include:</p>
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary">Summary Statistics</h6>
+                <ul class="text-muted">
+                    <li>Total number of course offerings</li>
+                    <li>Total number of enrollments</li>
+                    <li>Term information (if filtered)</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary">Per-Course Details</h6>
+                <ul class="text-muted">
+                    <li>Course code and name</li>
+                    <li>Teacher assigned</li>
+                    <li>Maximum students capacity</li>
+                    <li>Enrolled students count</li>
+                    <li>Active enrollments count</li>
+                    <li>Dropped students count</li>
+                    <li>Completed students count</li>
+                    <li><strong>Enrollment rate percentage</strong></li>
+                </ul>
+            </div>
+        </div>
+        <div class="alert alert-warning mt-3">
+            <i class="bi bi-lightbulb me-2"></i>
+            <strong>Note:</strong> The enrollment rate shows how full each course offering is (enrolled / max students × 100%).
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title">Use Cases</h6>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="p-3 border rounded bg-light">
+                    <i class="bi bi-graph-up text-primary fs-3 mb-2"></i>
+                    <h6>Capacity Planning</h6>
+                    <p class="text-muted small mb-0">Identify courses that are over or under enrolled</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 border rounded bg-light">
+                    <i class="bi bi-calendar-event text-success fs-3 mb-2"></i>
+                    <h6>Term Analysis</h6>
+                    <p class="text-muted small mb-0">Compare enrollment trends across different terms</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 border rounded bg-light">
+                    <i class="bi bi-clipboard-check text-info fs-3 mb-2"></i>
+                    <h6>Administrative Reports</h6>
+                    <p class="text-muted small mb-0">Generate official enrollment statistics for reporting</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>
+        Back to Reports
+    </a>
+</div>
+
+@section Styles {
+    <style>
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .form-select-lg {
+            padding: 0.75rem 1rem;
+            font-size: 1.1rem;
+        }
+
+        small.text-muted {
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .alert-info {
+            border-left: 4px solid #0dcaf0;
+        }
+
+        .alert-warning {
+            border-left: 4px solid #ffc107;
+        }
+
+        .border.rounded {
+            transition: all 0.2s;
+        }
+
+        .border.rounded:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .fs-3 {
+            font-size: 2rem;
+        }
+    </style>
+}

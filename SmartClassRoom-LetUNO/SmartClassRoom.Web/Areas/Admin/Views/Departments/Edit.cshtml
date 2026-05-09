@@ -1,0 +1,114 @@
+@model SmartClassRoom.Web.Models.ViewModels.Departments.EditDepartmentRequest
+
+@{
+    ViewData["Title"] = "Edit Department";
+    ViewData["PageTitle"] = "Edit Department";
+    ViewData["PageIcon"] = "diagram-3";
+    ViewData["PageDescription"] = "Update department information";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="card form-card">
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="Id" type="hidden" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-info-circle"></i> Basic Information
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" placeholder="Enter department name" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Code" class="form-label"></label>
+                        <input asp-for="Code" class="form-control" placeholder="Enter department code (optional)" />
+                        <span asp-validation-for="Code" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter department description"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- University & Head Assignment Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-building"></i> University & Leadership
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="UniversityId" class="form-label"></label>
+                        <select asp-for="UniversityId" class="form-select" asp-items="ViewBag.Universities">
+                            <option value="">-- Select University --</option>
+                        </select>
+                        <span asp-validation-for="UniversityId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="HeadOfDepartmentId" class="form-label"></label>
+                        @if (ViewBag.Teachers != null)
+                        {
+                            <select asp-for="HeadOfDepartmentId" class="form-select" asp-items="ViewBag.Teachers">
+                                <option value="">-- No Head Assigned --</option>
+                            </select>
+                        }
+                        else
+                        {
+                            <select class="form-select" disabled>
+                                <option>No teachers available</option>
+                            </select>
+                        }
+                        <span asp-validation-for="HeadOfDepartmentId" class="text-danger"></span>
+                        <small class="form-text text-muted">Only active teachers from this department are shown</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-check-circle"></i> Status
+                </h5>
+
+                <div class="form-check form-switch">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Update Department
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

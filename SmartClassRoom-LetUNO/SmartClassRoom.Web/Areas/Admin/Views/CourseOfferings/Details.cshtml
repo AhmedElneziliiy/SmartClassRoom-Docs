@@ -1,0 +1,581 @@
+@model SmartClassRoom.Web.Models.Entities.Academic.CourseOffering
+
+@{
+    ViewData["Title"] = "Offering Details";
+    var statistics = (SmartClassRoom.Web.Services.Interfaces.OfferingStatistics)ViewBag.Statistics;
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="page-title">Course Offering Details</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Course Offerings</a></li>
+                    <li class="breadcrumb-item active">Details</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            @{
+                var hasGradeComponents = Model.GradeComponents != null && Model.GradeComponents.Any();
+            }
+            @if (hasGradeComponents)
+            {
+                <a asp-area="Admin" asp-controller="Grades" asp-action="GradeSheet" asp-route-id="@Model.Id" class="btn btn-success">
+                    <i class="bi bi-table"></i> Manage Grades
+                </a>
+            }
+            else
+            {
+                <a asp-area="Admin" asp-controller="Grades" asp-action="ConfigureComponents" asp-route-id="@Model.Id" class="btn btn-warning">
+                    <i class="bi bi-gear"></i> Configure Grades
+                </a>
+            }
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 opacity-75">Enrolled Students</h6>
+                            <h2 class="card-title mb-0">@statistics.EnrolledStudentsCount</h2>
+                        </div>
+                        <i class="bi bi-people fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 opacity-75">Active Enrollments</h6>
+                            <h2 class="card-title mb-0">@statistics.ActiveEnrollmentsCount</h2>
+                        </div>
+                        <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 opacity-75">Available Seats</h6>
+                            <h2 class="card-title mb-0">@statistics.AvailableSeats</h2>
+                        </div>
+                        <i class="bi bi-chair fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card @(statistics.IsNearCapacity ? "bg-warning" : "bg-secondary") text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 opacity-75">Max Capacity</h6>
+                            <h2 class="card-title mb-0">@statistics.MaxStudents</h2>
+                        </div>
+                        <i class="bi bi-person-workspace fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Offering Information -->
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle"></i> Offering Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <th style="width: 40%;">Course:</th>
+                                <td>
+                                    <strong>@Model.Course.Code</strong> - @Model.Course.Name
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Term:</th>
+                                <td>
+                                    @Model.Term.Name
+                                    <span class="text-muted">
+                                        (@Model.Term.StartDate.ToString("MMM dd, yyyy") - @Model.Term.EndDate.ToString("MMM dd, yyyy"))
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Teacher:</th>
+                                <td>@Model.Teacher.FullName</td>
+                            </tr>
+                            <tr>
+                                <th>Section:</th>
+                                <td>@(Model.Section?.Name ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th>Department:</th>
+                                <td>@(Model.Course.Department?.Name ?? "N/A")</td>
+                            </tr>
+                            <tr>
+                                <th>Sessions Per Week:</th>
+                                <td>@Model.SessionsPerWeek</td>
+                            </tr>
+                            <tr>
+                                <th>Max Students:</th>
+                                <td>@Model.MaxStudents</td>
+                            </tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td>
+                                    @if (Model.Status == "Active")
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else if (Model.Status == "Completed")
+                                    {
+                                        <span class="badge bg-secondary">Completed</span>
+                                    }
+                                    else if (Model.Status == "Cancelled")
+                                    {
+                                        <span class="badge bg-danger">Cancelled</span>
+                                    }
+                                    else if (Model.Status == "Upcoming")
+                                    {
+                                        <span class="badge bg-info">Upcoming</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@Model.Status</span>
+                                    }
+                                </td>
+                            </tr>
+                            @if (!string.IsNullOrWhiteSpace(Model.Notes))
+                            {
+                                <tr>
+                                    <th>Notes:</th>
+                                    <td>@Model.Notes</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Information -->
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-calendar-week"></i> Schedule
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Sessions != null && Model.Sessions.Any())
+                    {
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Room</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var session in Model.Sessions.OrderByDescending(s => s.SessionDate).Take(5))
+                                {
+                                    <tr>
+                                        <td>@session.SessionDate.ToString("MMM dd, yyyy")</td>
+                                        <td>@session.StartTime.ToString(@"hh\:mm") - @session.EndTime.ToString(@"hh\:mm")</td>
+                                        <td>@(session.Room?.Name ?? "TBA")</td>
+                                        <td>
+                                            @if (session.Status == "Scheduled")
+                                            {
+                                                <span class="badge bg-info">Scheduled</span>
+                                            }
+                                            else if (session.Status == "Completed")
+                                            {
+                                                <span class="badge bg-success">Completed</span>
+                                            }
+                                            else if (session.Status == "Cancelled")
+                                            {
+                                                <span class="badge bg-danger">Cancelled</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">@session.Status</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        @if (Model.Sessions.Count > 5)
+                        {
+                            <small class="text-muted">Showing 5 most recent sessions of @Model.Sessions.Count total</small>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No sessions scheduled yet.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrolled Students -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-people"></i> Enrolled Students (@Model.Enrollments.Count(e => e.Status == "Enrolled"))
+                </h5>
+                <div>
+                    @if (Model.Status != "Cancelled" && Model.Status != "Completed")
+                    {
+                        <button type="button" class="btn btn-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#autoEnrollModal">
+                            <i class="bi bi-magic"></i> Auto-Enroll
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#manualEnrollModal">
+                            <i class="bi bi-person-plus"></i> Add Students
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Enrollments.Any(e => e.Status == "Enrolled"))
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Student Code</th>
+                                <th>Email</th>
+                                <th>Enrollment Date</th>
+                                <th>Status</th>
+                                <th>Grade</th>
+                                @if (Model.Status != "Cancelled" && Model.Status != "Completed")
+                                {
+                                    <th>Action</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var enrollment in Model.Enrollments.Where(e => e.Status == "Enrolled").OrderBy(e => e.Student.FullName))
+                            {
+                                <tr>
+                                    <td>@enrollment.Student.FullName</td>
+                                    <td>@enrollment.Student.StudentCode</td>
+                                    <td>@enrollment.Student.Email</td>
+                                    <td>@enrollment.EnrollmentDate.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @if (enrollment.Status == "Enrolled")
+                                        {
+                                            <span class="badge bg-success">Enrolled</span>
+                                        }
+                                        else if (enrollment.Status == "Completed")
+                                        {
+                                            <span class="badge bg-info">Completed</span>
+                                        }
+                                        else if (enrollment.Status == "Dropped")
+                                        {
+                                            <span class="badge bg-danger">Dropped</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@enrollment.Status</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (enrollment.FinalGrade.HasValue)
+                                        {
+                                            <span class="badge bg-primary">@enrollment.FinalGrade.Value.ToString("F1")</span>
+                                            @if (!string.IsNullOrEmpty(enrollment.LetterGrade))
+                                            {
+                                                <span class="badge bg-success ms-1">@enrollment.LetterGrade</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    @if (Model.Status != "Cancelled" && Model.Status != "Completed")
+                                    {
+                                        <td>
+                                            <form asp-action="Unenroll" method="post" style="display: inline;">
+                                                <input type="hidden" name="enrollmentId" value="@enrollment.Id" />
+                                                <input type="hidden" name="offeringId" value="@Model.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        onclick="return confirm('Are you sure you want to unenroll @enrollment.Student.FullName?');">
+                                                    <i class="bi bi-person-dash"></i> Unenroll
+                                                </button>
+                                            </form>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mb-3 mt-2">No students enrolled yet.</p>
+                    @if (Model.Status != "Cancelled" && Model.Status != "Completed")
+                    {
+                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#autoEnrollModal">
+                            <i class="bi bi-magic"></i> Auto-Enroll Students
+                        </button>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#manualEnrollModal">
+                            <i class="bi bi-person-plus"></i> Add Students Manually
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Auto-Enroll Modal -->
+    <div class="modal fade" id="autoEnrollModal" tabindex="-1" aria-labelledby="autoEnrollModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="autoEnrollModalLabel">Auto-Enroll Students</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Auto-enrollment criteria:</strong>
+                        <ul class="mb-0 mt-2">
+                            @if (Model.SectionId.HasValue)
+                            {
+                                <li>All active students in section: <strong>@Model.Section?.Name</strong></li>
+                            }
+                            else
+                            {
+                                <li>All active students in department: <strong>@Model.Course.Department?.Name</strong></li>
+                            }
+                            <li>Students must meet all prerequisites</li>
+                            <li>Students must not have schedule conflicts</li>
+                            <li>Capacity limit: <strong>@Model.MaxStudents</strong> students</li>
+                        </ul>
+                    </div>
+                    <p>Are you sure you want to automatically enroll eligible students?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form asp-action="AutoEnroll" asp-route-id="@Model.Id" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-magic"></i> Auto-Enroll Students
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Enroll Modal -->
+    <div class="modal fade" id="manualEnrollModal" tabindex="-1" aria-labelledby="manualEnrollModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="manualEnrollModalLabel">Add Students Manually</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Search box -->
+                    <div class="mb-3">
+                        <input type="text" id="studentSearchBox" class="form-control" placeholder="Search by name, code, or email...">
+                    </div>
+
+                    <!-- Loading indicator -->
+                    <div id="loadingIndicator" class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2">Loading students...</p>
+                    </div>
+
+                    <!-- Students list -->
+                    <div id="studentsList" style="max-height: 400px; overflow-y: auto; display: none;">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <!-- No students message -->
+                    <div id="noStudentsMessage" class="alert alert-warning" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i> No eligible students found.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="enrollSelectedBtn" class="btn btn-primary" onclick="enrollSelectedStudents()">
+                        <i class="bi bi-person-plus"></i> Enroll Selected
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let eligibleStudents = [];
+
+        // Load eligible students when modal opens
+        $('#manualEnrollModal').on('shown.bs.modal', function () {
+            loadEligibleStudents();
+        });
+
+        // Search functionality with debounce
+        let searchTimeout;
+        $('#studentSearchBox').on('input', function () {
+            clearTimeout(searchTimeout);
+            const searchTerm = $(this).val().toLowerCase();
+
+            searchTimeout = setTimeout(function () {
+                renderStudentsList(searchTerm);
+            }, 300);
+        });
+
+        function loadEligibleStudents() {
+            $('#loadingIndicator').show();
+            $('#studentsList').hide();
+            $('#noStudentsMessage').hide();
+
+            $.ajax({
+                url: '@Url.Action("GetEligibleStudents", "CourseOfferings")',
+                type: 'GET',
+                data: { id: @Model.Id },
+                success: function (data) {
+                    eligibleStudents = data;
+                    $('#loadingIndicator').hide();
+
+                    if (eligibleStudents.length > 0) {
+                        renderStudentsList('');
+                        $('#studentsList').show();
+                    } else {
+                        $('#noStudentsMessage').show();
+                    }
+                },
+                error: function () {
+                    $('#loadingIndicator').hide();
+                    alert('Error loading students. Please try again.');
+                }
+            });
+        }
+
+        function renderStudentsList(searchTerm) {
+            const filteredStudents = eligibleStudents.filter(s =>
+                s.studentName.toLowerCase().includes(searchTerm) ||
+                (s.studentCode && s.studentCode.toLowerCase().includes(searchTerm)) ||
+                (s.email && s.email.toLowerCase().includes(searchTerm))
+            );
+
+            let html = '';
+            filteredStudents.forEach(student => {
+                const disabled = student.isAlreadyEnrolled ? 'disabled' : '';
+                const checkedClass = student.isAlreadyEnrolled ? 'text-muted' : '';
+                const enrolledBadge = student.isAlreadyEnrolled ? '<span class="badge bg-secondary ms-2">Already Enrolled</span>' : '';
+
+                html += `
+                    <div class="form-check border-bottom py-2 ${checkedClass}">
+                        <input class="form-check-input student-checkbox" type="checkbox"
+                               value="${student.studentId}"
+                               id="student_${student.studentId}" ${disabled}>
+                        <label class="form-check-label w-100" for="student_${student.studentId}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${student.studentName}</strong>
+                                    ${student.studentCode ? `<span class="text-muted">(${student.studentCode})</span>` : ''}
+                                    ${enrolledBadge}
+                                    <br>
+                                    <small class="text-muted">
+                                        ${student.email || 'No email'} |
+                                        ${student.departmentName || 'N/A'} |
+                                        ${student.sectionName || 'No section'}
+                                    </small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                `;
+            });
+
+            if (html === '') {
+                html = '<div class="alert alert-info"><i class="bi bi-info-circle"></i> No students found matching your search.</div>';
+            }
+
+            $('#studentsList').html(html);
+        }
+
+        function enrollSelectedStudents() {
+            const selectedIds = [];
+            $('.student-checkbox:checked').each(function () {
+                selectedIds.push($(this).val());
+            });
+
+            if (selectedIds.length === 0) {
+                alert('Please select at least one student to enroll.');
+                return;
+            }
+
+            // Create form and submit
+            const form = $('<form>', {
+                'method': 'POST',
+                'action': '@Url.Action("ManualEnroll", "CourseOfferings")'
+            });
+
+            form.append($('<input>', {
+                'type': 'hidden',
+                'name': '__RequestVerificationToken',
+                'value': $('input[name="__RequestVerificationToken"]').val()
+            }));
+
+            form.append($('<input>', {
+                'type': 'hidden',
+                'name': 'id',
+                'value': '@Model.Id'
+            }));
+
+            selectedIds.forEach(id => {
+                form.append($('<input>', {
+                    'type': 'hidden',
+                    'name': 'studentIds',
+                    'value': id
+                }));
+            });
+
+            $('body').append(form);
+            form.submit();
+        }
+    </script>
+}
+

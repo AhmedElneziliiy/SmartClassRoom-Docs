@@ -1,0 +1,298 @@
+@model SmartClassRoom.Web.Models.Entities.Identity.ApplicationUser
+@{
+    ViewData["Title"] = "User Details";
+    ViewData["PageTitle"] = "User Details";
+    ViewData["PageDescription"] = "View detailed information about the user";
+    ViewData["PageIcon"] = "person-circle";
+}
+
+@section PageActions {
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+        <i class="bi bi-pencil"></i> Edit User
+    </a>
+    <a asp-action="UploadFacePhoto" asp-route-id="@Model.Id" class="btn btn-primary">
+        <i class="bi bi-person-bounding-box"></i> Upload Face Photo
+    </a>
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="row g-4">
+    <!-- User Profile Card -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                @if (!string.IsNullOrEmpty(Model.ProfilePhotoPath))
+                {
+                    <img src="@Model.ProfilePhotoPath" alt="@Model.FullName" class="img-thumbnail mb-3" style="max-width: 200px; max-height: 200px;" />
+                }
+                else
+                {
+                    var userInitials = string.Join("", Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(n => n.FirstOrDefault()).Take(2));
+                    <div class="user-avatar-sm @Model.UserType?.ToLower() mb-3" style="width: 120px; height: 120px; font-size: 48px; margin: 0 auto;">
+                        @userInitials
+                    </div>
+                }
+
+                <h4>@Model.FullName</h4>
+                <p class="text-muted mb-2">@Model.UserName</p>
+
+                @if (Model.UserType == "Student")
+                {
+                    <span class="badge badge-student mb-3">
+                        <i class="bi bi-mortarboard me-1"></i>Student
+                    </span>
+                }
+                else if (Model.UserType == "Teacher")
+                {
+                    <span class="badge badge-teacher mb-3">
+                        <i class="bi bi-person-badge me-1"></i>Teacher
+                    </span>
+                }
+                else
+                {
+                    <span class="badge badge-admin mb-3">
+                        <i class="bi bi-shield-check me-1"></i>Admin
+                    </span>
+                }
+
+                <hr />
+
+                <div class="d-grid gap-2">
+                    <form asp-action="ResetPassword" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-primary w-100" onclick="return confirm('Reset password to default (Pass@123)?')">
+                            <i class="bi bi-key"></i> Reset Password to Default
+                        </button>
+                    </form>
+
+                    @if (!string.IsNullOrEmpty(Model.FaceEmbeddingBase64) && Model.FaceEmbeddingBase64 != "PLACEHOLDER_EMBEDDING")
+                    {
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Face Recognition Enrolled
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-exclamation-triangle"></i> Face Photo Not Enrolled
+                        </span>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.UDID))
+                    {
+                        <form asp-action="ResetUDID" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-warning w-100" onclick="return confirm('Reset device ID? User will need to login again from their device.')">
+                                <i class="bi bi-phone"></i> Reset Device ID
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.IsActive)
+                    {
+                        <form asp-action="Deactivate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to deactivate this user?')">
+                                <i class="bi bi-x-circle"></i> Deactivate User
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Activate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-success w-100">
+                                <i class="bi bi-check-circle"></i> Activate User
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Information -->
+    <div class="col-md-8">
+        <!-- Basic Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-circle"></i> Basic Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">Full Name</label>
+                        <p class="mb-0"><strong>@Model.FullName</strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Email</label>
+                        <p class="mb-0"><strong>@Model.Email</strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Phone Number</label>
+                        <p class="mb-0"><strong>@(Model.PhoneNumber ?? "N/A")</strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Roles</label>
+                        <p class="mb-0">
+                            @foreach (var role in ViewBag.Roles as IList<string> ?? new List<string>())
+                            {
+                                <span class="badge bg-primary me-1">@role</span>
+                            }
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Account Status</label>
+                        <p class="mb-0">
+                            @if (Model.IsActive)
+                            {
+                                <span class="status-badge active">
+                                    <i class="bi bi-check-circle me-1"></i>Active
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-badge inactive">
+                                    <i class="bi bi-x-circle me-1"></i>Inactive
+                                </span>
+                            }
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Created At</label>
+                        <p class="mb-0"><strong>@Model.CreatedAt.ToString("MMMM dd, yyyy hh:mm tt")</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personal Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-vcard"></i> Personal Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="text-muted small">National ID</label>
+                        <p class="mb-0"><strong>@(Model.NationalId ?? "N/A")</strong></p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-muted small">Date of Birth</label>
+                        <p class="mb-0"><strong>@(Model.DateOfBirth?.ToString("MMMM dd, yyyy") ?? "N/A")</strong></p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-muted small">Gender</label>
+                        <p class="mb-0"><strong>@(Model.Gender ?? "N/A")</strong></p>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="text-muted small">Address</label>
+                        <p class="mb-0"><strong>@(Model.Address ?? "N/A")</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student-Specific Information -->
+        @if (Model.UserType == "Student")
+        {
+            var student = Model as SmartClassRoom.Web.Models.Entities.Users.Student;
+            if (student != null)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-mortarboard"></i> Student Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="text-muted small">Student Code</label>
+                                <p class="mb-0"><strong>@(student.StudentCode ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Department</label>
+                                <p class="mb-0"><strong>@(student.Department?.Name ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Level</label>
+                                <p class="mb-0"><strong>@(student.Level?.Name ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Section</label>
+                                <p class="mb-0"><strong>@(student.Section?.Name ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Group</label>
+                                <p class="mb-0"><strong>@(student.Group?.Name ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Enrollment Date</label>
+                                <p class="mb-0"><strong>@(student.EnrollmentDate?.ToString("MMMM dd, yyyy") ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Academic Status</label>
+                                <p class="mb-0"><strong>@(student.AcademicStatus ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Current GPA</label>
+                                <p class="mb-0"><strong>@(student.CurrentGPA?.ToString("F2") ?? "N/A")</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
+        <!-- Teacher-Specific Information -->
+        @if (Model.UserType == "Teacher")
+        {
+            var teacher = Model as SmartClassRoom.Web.Models.Entities.Users.Teacher;
+            if (teacher != null)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-person-badge"></i> Teacher Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="text-muted small">Employee Code</label>
+                                <p class="mb-0"><strong>@(teacher.EmployeeCode ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Department</label>
+                                <p class="mb-0"><strong>@(teacher.Department?.Name ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Title</label>
+                                <p class="mb-0"><strong>@(teacher.Title ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Specialization</label>
+                                <p class="mb-0"><strong>@(teacher.Specialization ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Hire Date</label>
+                                <p class="mb-0"><strong>@(teacher.HireDate?.ToString("MMMM dd, yyyy") ?? "N/A")</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Employment Status</label>
+                                <p class="mb-0"><strong>@(teacher.EmploymentStatus ?? "N/A")</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

@@ -1,0 +1,232 @@
+@{
+    var students = ViewBag.Students as IEnumerable<SmartClassRoom.Web.Models.Entities.Users.Student>;
+    var terms = ViewBag.Terms as IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Term>;
+    var offerings = ViewBag.CourseOfferings as IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.CourseOffering>;
+
+    ViewData["Title"] = "Student Multi-Course Attendance Report";
+    ViewData["PageTitle"] = "Student Multi-Course Attendance Report";
+    ViewData["PageDescription"] = "Generate attendance report for a student across multiple courses";
+    ViewData["PageIcon"] = "person-badge";
+}
+
+<div class="card">
+    <div class="card-header bg-purple text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-person-badge me-2"></i>
+            Generate Student Multi-Course Attendance Report
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            Select a student and choose one or more courses to see their attendance breakdown across multiple courses.
+        </div>
+
+        <form method="post" asp-action="StudentMultiCourseAttendanceReport" id="reportForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Select Student <span class="text-danger">*</span></label>
+                    <select name="studentId" id="studentSelect" class="form-select" required>
+                        <option value="">-- Select a Student --</option>
+                        @if (students != null)
+                        {
+                            @foreach (var student in students.OrderBy(s => s.FullName))
+                            {
+                                <option value="@student.Id">@student.FullName (@student.StudentCode)</option>
+                            }
+                        }
+                    </select>
+                    <small class="text-muted">Choose the student to generate the report for</small>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label fw-bold">Select Course Offerings <span class="text-danger">*</span></label>
+                    <small class="text-muted d-block mb-2">Select at least one course offering (courses are grouped by term)</small>
+
+                    @if (offerings != null && terms != null)
+                    {
+                        <div id="courseSelectionArea" class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                            @foreach (var term in terms.OrderByDescending(t => t.StartDate))
+                            {
+                                var termOfferings = offerings.Where(o => o.TermId == term.Id).ToList();
+                                if (termOfferings.Any())
+                                {
+                                    <div class="term-group mb-3">
+                                        <h6 class="text-primary border-bottom pb-2">
+                                            <i class="bi bi-calendar3 me-2"></i>@term.Name
+                                        </h6>
+                                        <div class="row g-2">
+                                            @foreach (var offering in termOfferings.OrderBy(o => o.Course.Code))
+                                            {
+                                                <div class="col-md-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input course-checkbox"
+                                                               type="checkbox"
+                                                               name="courseOfferingIds"
+                                                               value="@offering.Id"
+                                                               id="course_@offering.Id">
+                                                        <label class="form-check-label" for="course_@offering.Id">
+                                                            <strong>@offering.Course.Code</strong> - @offering.Course.Name
+                                                            <small class="text-muted d-block">@offering.Teacher.FullName</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        <div id="selectionError" class="text-danger mt-2" style="display: none;">
+                            <i class="bi bi-exclamation-circle me-1"></i>Please select at least one course offering
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            No course offerings available. Please create course offerings first.
+                        </div>
+                    }
+                </div>
+
+                <div class="col-md-12">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="generateBtn">
+                            <i class="bi bi-file-earmark-bar-graph me-2"></i>
+                            Generate Report
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Back to Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title">Report Contents</h6>
+        <p class="text-muted">The student multi-course attendance report will include:</p>
+        <ul class="text-muted">
+            <li>Student name and student code</li>
+            <li>Attendance breakdown for each selected course</li>
+            <li>Course code, name, and term information</li>
+            <li>Attendance statistics: Total sessions, Present, Absent, Late, Excused counts</li>
+            <li>Attendance percentage for each course</li>
+            <li>Report generation date</li>
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('reportForm').addEventListener('submit', function(e) {
+            const checkboxes = document.querySelectorAll('.course-checkbox:checked');
+            const errorDiv = document.getElementById('selectionError');
+
+            if (checkboxes.length === 0) {
+                e.preventDefault();
+                errorDiv.style.display = 'block';
+                document.getElementById('courseSelectionArea').scrollIntoView({ behavior: 'smooth' });
+                return false;
+            }
+
+            errorDiv.style.display = 'none';
+            return true;
+        });
+
+        // Hide error when user selects a checkbox
+        document.querySelectorAll('.course-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const anyChecked = document.querySelectorAll('.course-checkbox:checked').length > 0;
+                if (anyChecked) {
+                    document.getElementById('selectionError').style.display = 'none';
+                }
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <style>
+        .bg-purple {
+            background-color: #6f42c1 !important;
+        }
+
+        .text-purple {
+            color: #6f42c1;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .form-label {
+            margin-bottom: 0.5rem;
+        }
+
+        small.text-muted {
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .term-group {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.375rem;
+        }
+
+        .form-check {
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+        }
+
+        .form-check:hover {
+            background-color: #e9ecef;
+        }
+
+        .form-check-input {
+            margin-top: 0.25rem;
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn {
+            font-weight: 500;
+        }
+
+        .alert-info {
+            border-left: 4px solid #0dcaf0;
+        }
+
+        #courseSelectionArea {
+            background-color: #ffffff;
+        }
+
+        #courseSelectionArea::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #courseSelectionArea::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #courseSelectionArea::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        #courseSelectionArea::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+}

@@ -1,0 +1,241 @@
+@model SmartClassRoom.Web.Models.ViewModels.Grading.GradeSheetDto
+@{
+    ViewData["Title"] = "Grade Sheet";
+    var offering = ViewBag.Offering as SmartClassRoom.Web.Models.Entities.Academic.CourseOffering;
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2>Grade Sheet</h2>
+                <p class="text-muted mb-0">@Model.Code - @Model.CourseName (@Model.TermName)</p>
+            </div>
+            <div>
+                <a asp-action="ConfigureComponents" asp-route-id="@Model.CourseOfferingId" class="btn btn-outline-primary">
+                    <i class="bi bi-gear"></i> Configure Components
+                </a>
+                <button type="button" class="btn btn-success" onclick="calculateFinalGrades()"
+                        @(Model.Components.Any() ? "" : "disabled")>
+                    <i class="bi bi-calculator"></i> Calculate Final Grades
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            @Html.Raw(TempData["WarningMessage"])
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!Model.Components.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No grade components configured yet.
+            <a asp-action="ConfigureComponents" asp-route-id="@Model.CourseOfferingId">Configure components</a> to start entering grades.
+        </div>
+    }
+    else if (!Model.Students.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No enrolled students found.
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover mb-0 grade-sheet-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="sticky-col" style="min-width: 180px;">Student</th>
+                                <th style="min-width: 100px;">Student Code</th>
+                                @foreach (var component in Model.Components)
+                                {
+                                    <th class="text-center" style="min-width: 120px;">
+                                        @component.ComponentName
+                                        <br />
+                                        <small class="text-muted">(@component.Weight% / @component.MaxScore pts)</small>
+                                    </th>
+                                }
+                                <th class="text-center" style="min-width: 100px;">Final Grade</th>
+                                <th class="text-center" style="min-width: 80px;">Letter</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var student in Model.Students)
+                            {
+                                <tr>
+                                    <td class="sticky-col bg-white">
+                                        <strong>@student.StudentName</strong>
+                                    </td>
+                                    <td>@student.StudentCode</td>
+                                    @for (int i = 0; i < Model.Components.Count; i++)
+                                    {
+                                        var component = Model.Components[i];
+                                        var score = student.ComponentScores[i];
+                                        <td class="text-center">
+                                            <input type="number"
+                                                   class="form-control form-control-sm text-center grade-input"
+                                                   data-student-id="@student.StudentId"
+                                                   data-component-id="@component.Id"
+                                                   data-grade-id="@score.GradeId"
+                                                   data-max-score="@component.MaxScore"
+                                                   value="@score.Score"
+                                                   step="0.01"
+                                                   min="0"
+                                                   max="@component.MaxScore"
+                                                   onchange="saveGrade(this)"
+                                                   style="min-width: 80px;" />
+                                        </td>
+                                    }
+                                    <td class="text-center">
+                                        <strong>@(student.FinalGrade?.ToString("F2") ?? "-")</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-@GetLetterGradeBadgeColor(student.LetterGrade)">
+                                            @(student.LetterGrade ?? "-")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Calculate Final Grades Confirmation Modal -->
+<form id="calculateForm" asp-action="CalculateFinalGrades" asp-route-id="@Model.CourseOfferingId" method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Styles {
+    <style>
+        .grade-sheet-table .sticky-col {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background-color: #f8f9fa;
+        }
+
+        .grade-input {
+            width: 80px;
+        }
+
+        .grade-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .grade-input.saving {
+            border-color: #ffc107;
+        }
+
+        .grade-input.saved {
+            border-color: #198754;
+        }
+
+        .grade-input.error {
+            border-color: #dc3545;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        let saveTimeout;
+
+        async function saveGrade(input) {
+            const studentId = input.dataset.studentId;
+            const componentId = input.dataset.componentId;
+            const score = parseFloat(input.value);
+            const maxScore = parseFloat(input.dataset.maxScore);
+
+            if (isNaN(score) || score < 0 || score > maxScore) {
+                alert(`Score must be between 0 and ${maxScore}`);
+                input.value = input.dataset.originalValue || '';
+                return;
+            }
+
+            input.classList.add('saving');
+
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                const response = await fetch('@Url.Action("SaveGrade")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token,
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: JSON.stringify({
+                        studentId: parseInt(studentId),
+                        gradeComponentId: parseInt(componentId),
+                        score: score,
+                        enteredBy: 0
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    input.classList.remove('saving');
+                    input.classList.add('saved');
+                    input.dataset.originalValue = score;
+                    setTimeout(() => input.classList.remove('saved'), 1000);
+                } else {
+                    throw new Error(result.message || 'Failed to save grade');
+                }
+            } catch (error) {
+                input.classList.remove('saving');
+                input.classList.add('error');
+                console.error('Error saving grade:', error);
+                alert('Error saving grade: ' + error.message);
+                input.value = input.dataset.originalValue || '';
+                setTimeout(() => input.classList.remove('error'), 2000);
+            }
+        }
+
+        function calculateFinalGrades() {
+            if (confirm('This will calculate final grades for all enrolled students based on their component scores. Continue?')) {
+                document.getElementById('calculateForm').submit();
+            }
+        }
+
+        // Store original values on load
+        document.querySelectorAll('.grade-input').forEach(input => {
+            input.dataset.originalValue = input.value;
+        });
+    </script>
+}
+
+@functions {
+    string GetLetterGradeBadgeColor(string? letterGrade)
+    {
+        return letterGrade switch
+        {
+            "A" => "success",
+            "B+" or "B" => "primary",
+            "C+" or "C" => "info",
+            "D" => "warning",
+            "F" => "danger",
+            _ => "secondary"
+        };
+    }
+}

@@ -1,0 +1,277 @@
+@model SmartClassRoom.Web.Models.Entities.Academic.Group
+
+@{
+    ViewData["Title"] = "Group Details";
+    ViewData["PageTitle"] = Model.Name;
+    ViewData["PageIcon"] = "people-fill";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+    var statistics = ViewBag.Statistics as SmartClassRoom.Web.Services.Interfaces.GroupStatistics;
+}
+
+@section PageActions {
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+        <i class="bi bi-pencil"></i> Edit
+    </a>
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="row g-4">
+    <!-- Left Column: Group Info -->
+    <div class="col-lg-4">
+        <div class="card detail-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle"></i> Group Information
+                </h5>
+
+                <div class="detail-group">
+                    <label>Name</label>
+                    <p><strong>@Model.Name</strong></p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Code))
+                {
+                    <div class="detail-group">
+                        <label>Code</label>
+                        <p><span class="badge bg-secondary">@Model.Code</span></p>
+                    </div>
+                }
+
+                <div class="detail-group">
+                    <label>Section</label>
+                    <p>
+                        <i class="bi bi-collection"></i>
+                        <a asp-area="Admin" asp-controller="Sections" asp-action="Details" asp-route-id="@Model.SectionId">
+                            @Model.Section.Name
+                        </a>
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Level</label>
+                    <p>
+                        <i class="bi bi-layers"></i>
+                        <a asp-area="Admin" asp-controller="Levels" asp-action="Details" asp-route-id="@Model.Section.LevelId">
+                            @Model.Section.Level.Name
+                        </a>
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Department</label>
+                    <p>
+                        <i class="bi bi-diagram-3"></i>
+                        <a asp-area="Admin" asp-controller="Departments" asp-action="Details" asp-route-id="@Model.Section.Level.DepartmentId">
+                            @Model.Section.Level.Department.Name
+                        </a>
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Capacity</label>
+                    <p>
+                        @if (Model.Capacity.HasValue)
+                        {
+                            if (statistics != null && statistics.IsNearCapacity)
+                            {
+                                <span class="badge bg-warning">@Model.Capacity <i class="bi bi-exclamation-triangle"></i> Near Capacity</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-info">@Model.Capacity <i class="bi bi-people"></i></span>
+                            }
+                            if (statistics != null)
+                            {
+                                <small class="text-muted d-block mt-1">@statistics.AvailableCapacity spots available</small>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">No Limit</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Status</label>
+                    <p>
+                        @if (Model.IsActive)
+                        {
+                            <span class="status-badge active">
+                                <i class="bi bi-check-circle me-1"></i>Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="status-badge inactive">
+                                <i class="bi bi-x-circle me-1"></i>Inactive
+                            </span>
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div class="card detail-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-gear"></i> Actions
+                </h5>
+
+                <div class="detail-actions">
+                    @if (Model.IsActive)
+                    {
+                        <form asp-action="Deactivate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-warning btn-sm w-100"
+                                    onclick="return confirm('Are you sure you want to deactivate this group? Make sure there are no active students.')">
+                                <i class="bi bi-slash-circle"></i> Deactivate Group
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Activate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-success btn-sm w-100"
+                                    onclick="return confirm('Are you sure you want to activate this group?')">
+                                <i class="bi bi-check-circle"></i> Activate Group
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Statistics and Related Data -->
+    <div class="col-lg-8">
+        <!-- Statistics Card -->
+        @if (statistics != null)
+        {
+            <div class="card stats-card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-graph-up"></i> Statistics
+                    </h5>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-success">
+                                    <i class="bi bi-person-check"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Total Students</span>
+                                    <span class="stat-value">@statistics.StudentsCount</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-warning">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Active Students</span>
+                                    <span class="stat-value">@statistics.ActiveStudentsCount</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (statistics.Capacity.HasValue)
+                        {
+                            <div class="col-md-12">
+                                <div class="stat-item">
+                                    <div class="stat-icon bg-info">
+                                        <i class="bi bi-people"></i>
+                                    </div>
+                                    <div class="stat-details">
+                                        <span class="stat-label">Available Capacity</span>
+                                        <span class="stat-value">@statistics.AvailableCapacity</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Students Card -->
+        <div class="card data-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-people"></i> Students
+                </h5>
+
+                @if (Model.Students.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Code</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var student in Model.Students.OrderByDescending(s => s.IsActive).Take(10))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@student.Id">
+                                                @student.FullName
+                                            </a>
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(student.StudentCode))
+                                            {
+                                                <span class="badge bg-secondary">@student.StudentCode</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">N/A</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (student.IsActive)
+                                            {
+                                                <span class="status-badge active">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge inactive">Inactive</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.Students.Count > 10)
+                    {
+                        <div class="text-center mt-3">
+                            <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-groupId="@Model.Id" class="btn btn-sm btn-outline-primary">
+                                View All Students (@Model.Students.Count)
+                            </a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state-small">
+                        <i class="bi bi-people"></i>
+                        <p>No students found for this group.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,235 @@
+@model SmartClassRoom.Web.Models.ViewModels.Reports.StudentMultiCourseAttendanceDto
+
+@{
+    ViewData["Title"] = "Student Multi-Course Attendance Report";
+    ViewData["PageTitle"] = $"Attendance Report - {Model.StudentName}";
+    ViewData["PageDescription"] = "Student attendance across multiple courses";
+    ViewData["PageIcon"] = "person-badge";
+
+    var courseIds = string.Join(",", Model.Courses.Select(c => c.CourseOfferingId));
+}
+
+<div class="card mb-4">
+    <div class="card-header bg-purple text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-person-badge me-2"></i>
+            Student Multi-Course Attendance Report
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6 class="text-muted">Student Information</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <th width="40%">Student Name:</th>
+                        <td><strong>@Model.StudentName</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Student Code:</th>
+                        <td><strong>@Model.StudentCode</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Number of Courses:</th>
+                        <td><span class="badge bg-purple">@Model.Courses.Count courses</span></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted">Report Information</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <th width="40%">Generated Date:</th>
+                        <td>@Model.GeneratedDate.ToString("MMMM dd, yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <th>Overall Average:</th>
+                        <td>
+                            @{
+                                var overallAvg = Model.Courses.Any() ? Model.Courses.Average(c => c.AttendancePercentage) : 0;
+                                var avgClass = overallAvg >= 75 ? "success" : overallAvg >= 50 ? "warning" : "danger";
+                            }
+                            <span class="badge bg-@avgClass">@overallAvg.ToString("F1")%</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mb-3">
+            <a asp-action="GenerateStudentMultiCourseAttendancePdf"
+               asp-route-studentId="@Model.StudentId"
+               asp-route-courseOfferingIds="@courseIds"
+               class="btn btn-danger">
+                <i class="bi bi-file-pdf me-2"></i>
+                Download PDF
+            </a>
+            <a asp-action="GenerateStudentMultiCourseAttendanceExcel"
+               asp-route-studentId="@Model.StudentId"
+               asp-route-courseOfferingIds="@courseIds"
+               class="btn btn-success">
+                <i class="bi bi-file-excel me-2"></i>
+                Download Excel
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Course-by-Course Attendance Breakdown</h5>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Courses.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Course Code</th>
+                            <th>Course Name</th>
+                            <th>Term</th>
+                            <th class="text-center">Total Sessions</th>
+                            <th class="text-center">Present</th>
+                            <th class="text-center">Absent</th>
+                            <th class="text-center">Late</th>
+                            <th class="text-center">Excused</th>
+                            <th class="text-center">Attendance %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var course in Model.Courses.OrderBy(c => c.TermName).ThenBy(c => c.CourseCode))
+                        {
+                            var percentageClass = course.AttendancePercentage >= 75 ? "success" :
+                                                  course.AttendancePercentage >= 50 ? "warning" : "danger";
+
+                            <tr>
+                                <td>
+                                    <strong class="text-primary">@course.CourseCode</strong>
+                                </td>
+                                <td>@course.CourseName</td>
+                                <td>
+                                    <span class="text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i>@course.TermName
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">@course.TotalSessions</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">@course.PresentCount</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-danger">@course.AbsentCount</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning text-dark">@course.LateCount</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info text-dark">@course.ExcusedCount</span>
+                                </td>
+                                <td class="text-center">
+                                    <strong>
+                                        <span class="badge bg-@percentageClass" style="font-size: 1rem;">
+                                            @course.AttendancePercentage.ToString("F1")%
+                                        </span>
+                                    </strong>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Totals:</strong></td>
+                            <td class="text-center"><strong>@Model.Courses.Sum(c => c.TotalSessions)</strong></td>
+                            <td class="text-center"><strong>@Model.Courses.Sum(c => c.PresentCount)</strong></td>
+                            <td class="text-center"><strong>@Model.Courses.Sum(c => c.AbsentCount)</strong></td>
+                            <td class="text-center"><strong>@Model.Courses.Sum(c => c.LateCount)</strong></td>
+                            <td class="text-center"><strong>@Model.Courses.Sum(c => c.ExcusedCount)</strong></td>
+                            <td class="text-center">
+                                @{
+                                    var avgClass2 = overallAvg >= 75 ? "success" : overallAvg >= 50 ? "warning" : "danger";
+                                }
+                                <strong>
+                                    <span class="badge bg-@avgClass2" style="font-size: 1rem;">
+                                        @overallAvg.ToString("F1")% Avg
+                                    </span>
+                                </strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <h4>No Course Data</h4>
+                <p>No attendance data found for the selected courses.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="StudentMultiCourseAttendanceReport" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>
+        Generate Another Report
+    </a>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-house me-2"></i>
+        Back to Reports
+    </a>
+</div>
+
+@section Styles {
+    <style>
+        .bg-purple {
+            background-color: #6f42c1 !important;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .table th {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .table td {
+            color: #212529;
+            vertical-align: middle;
+        }
+
+        .badge {
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h4 {
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #adb5bd;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+}

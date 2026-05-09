@@ -1,0 +1,441 @@
+@{
+    ViewData["Title"] = "Sessions";
+    ViewData["PageTitle"] = "Session Management";
+    ViewData["PageIcon"] = "calendar3";
+    ViewData["PageDescription"] = "Manage and monitor class sessions";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+<!-- Statistics Cards Grid (4 cards) -->
+<div class="stats-grid mb-4">
+    <!-- Card 1: Total Sessions (Primary - Blue) -->
+    <div class="stat-card primary">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Total Sessions</p>
+                <h2 class="stat-card-value">@ViewBag.TotalSessions</h2>
+                <div class="session-breakdown mt-2">
+                    <small>Scheduled: @ViewBag.ScheduledCount | InProgress: @ViewBag.InProgressCount | Completed: @ViewBag.CompletedCount</small>
+                </div>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-calendar3"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 2: Completion Rate (Success - Green) -->
+    <div class="stat-card success">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Completion Rate</p>
+                <h2 class="stat-card-value">@ViewBag.CompletionRate%</h2>
+                <div class="progress mt-2" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: @ViewBag.CompletionRate%"></div>
+                </div>
+                <p class="stat-card-subtitle mt-2">
+                    <small>@ViewBag.CompletedSessions / @ViewBag.ScheduledSessions completed</small>
+                </p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: Session Types (Info - Teal) -->
+    <div class="stat-card info">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Session Types</p>
+                <div class="session-type-breakdown">
+                    <div class="breakdown-item">
+                        <i class="bi bi-book"></i>
+                        <span>Regular: @ViewBag.RegularSessionsCount (@ViewBag.RegularPercentage%)</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>Makeup: @ViewBag.MakeupSessionsCount (@ViewBag.MakeupPercentage%)</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Exam: @ViewBag.ExamSessionsCount (@ViewBag.ExamPercentage%)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-layers"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 4: Attendance Rate (Warning - Purple) -->
+    <div class="stat-card warning">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Average Attendance</p>
+                <h2 class="stat-card-value">@ViewBag.OverallAttendanceRate%</h2>
+                <p class="stat-card-subtitle mt-2">
+                    Students: @ViewBag.AverageStudentAttendanceRate% | Teachers: @ViewBag.AverageTeacherAttendanceRate%
+                </p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-people"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row (2 columns) -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>Session Status Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="sessionStatusChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up me-2"></i>30-Day Session Trend
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="sessionTrendChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weekly Navigation -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h6 class="mb-1">Quick Navigation</h6>
+                <span class="badge bg-primary">Showing: @ViewBag.DateRangeDisplay</span>
+            </div>
+            <div class="btn-group" role="group">
+                <a href="@Url.Action("Index", new {
+                       startDate = ViewBag.PreviousWeekStart,
+                       endDate = ViewBag.PreviousWeekEnd,
+                       status = ViewBag.SelectedStatus,
+                       sessionType = ViewBag.SelectedSessionType,
+                       courseOfferingId = ViewBag.SelectedCourseOfferingId,
+                       roomId = ViewBag.SelectedRoomId,
+                       teacherId = ViewBag.SelectedTeacherId
+                   })"
+                   class="btn btn-outline-secondary">
+                    <i class="bi bi-chevron-left"></i> Previous Week
+                </a>
+                <a href="@Url.Action("Index", new {
+                       startDate = ViewBag.CurrentWeekStart,
+                       endDate = ViewBag.CurrentWeekEnd,
+                       status = ViewBag.SelectedStatus,
+                       sessionType = ViewBag.SelectedSessionType,
+                       courseOfferingId = ViewBag.SelectedCourseOfferingId,
+                       roomId = ViewBag.SelectedRoomId,
+                       teacherId = ViewBag.SelectedTeacherId
+                   })"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-calendar-week"></i> This Week
+                </a>
+                <a href="@Url.Action("Index", new {
+                       startDate = ViewBag.NextWeekStart,
+                       endDate = ViewBag.NextWeekEnd,
+                       status = ViewBag.SelectedStatus,
+                       sessionType = ViewBag.SelectedSessionType,
+                       courseOfferingId = ViewBag.SelectedCourseOfferingId,
+                       roomId = ViewBag.SelectedRoomId,
+                       teacherId = ViewBag.SelectedTeacherId
+                   })"
+                   class="btn btn-outline-secondary">
+                    Next Week <i class="bi bi-chevron-right"></i>
+                </a>
+                <a href="@Url.Action("Index", new {
+                       startDate = ViewBag.MonthStart,
+                       endDate = ViewBag.MonthEnd,
+                       status = ViewBag.SelectedStatus,
+                       sessionType = ViewBag.SelectedSessionType,
+                       courseOfferingId = ViewBag.SelectedCourseOfferingId,
+                       roomId = ViewBag.SelectedRoomId,
+                       teacherId = ViewBag.SelectedTeacherId
+                   })"
+                   class="btn btn-outline-info">
+                    <i class="bi bi-calendar-month"></i> This Month
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Sessions Alert (if any) -->
+@if (ViewBag.UpcomingSessions != null && ViewBag.UpcomingSessions.Count > 0)
+{
+    var upcomingSessions = (List<SmartClassRoom.Web.Models.ViewModels.Sessions.SessionDisplayDto>)ViewBag.UpcomingSessions;
+    <div class="alert alert-info upcoming-sessions-alert mb-4">
+        <h6 class="alert-heading">
+            <i class="bi bi-calendar-event me-2"></i>Upcoming Sessions (Next 7 Days)
+        </h6>
+        <ul class="mb-0">
+            @foreach (var session in upcomingSessions.Take(5))
+            {
+                <li>
+                    <strong>@session.FormattedDate @session.FormattedTime</strong> - @session.CourseName (@session.RoomName)
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+<!-- Active Sessions Alert (if any) -->
+@if (ViewBag.ActiveSessionsCount > 0)
+{
+    <div class="alert alert-warning active-sessions-alert mb-4">
+        <h6 class="alert-heading">
+            <i class="bi bi-play-circle me-2"></i>Active Sessions
+        </h6>
+        <p class="mb-0">There are currently <strong>@ViewBag.ActiveSessionsCount</strong> session(s) in progress.</p>
+    </div>
+}
+
+<!-- Filters Card -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">
+            <i class="bi bi-funnel me-2"></i>Filters
+        </h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="Index" method="get">
+            <div class="filter-row">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" name="startDate" class="form-control" value="@ViewBag.StartDate">
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" name="endDate" class="form-control" value="@ViewBag.EndDate">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        @foreach (var statusOption in ViewBag.StatusOptions)
+                        {
+                            <option value="@statusOption">@statusOption</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select name="sessionType" class="form-select">
+                        <option value="">All Types</option>
+                        @foreach (var typeOption in ViewBag.SessionTypeOptions)
+                        {
+                            <option value="@typeOption">@typeOption</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Course</label>
+                    <select name="courseOfferingId" class="form-select">
+                        <option value="">All Courses</option>
+                        @foreach (var course in ViewBag.CourseOfferings)
+                        {
+                            <option value="@course.Value">@course.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Room</label>
+                    <select name="roomId" class="form-select">
+                        <option value="">All Rooms</option>
+                        @foreach (var room in ViewBag.Rooms)
+                        {
+                            <option value="@room.Value">@room.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Teacher</label>
+                    <select name="teacherId" class="form-select">
+                        <option value="">All Teachers</option>
+                        @foreach (var teacher in ViewBag.Teachers)
+                        {
+                            <option value="@teacher.Value">@teacher.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group align-self-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i> Apply Filters
+                    </button>
+                </div>
+                <div class="form-group align-self-end">
+                    <a asp-action="Index" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-1"></i> Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Sessions Table -->
+<div class="card">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">
+            <i class="bi bi-list-ul me-2"></i>Recent Sessions
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (ViewBag.RecentSessions != null && ViewBag.RecentSessions.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-hover sessions-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Course</th>
+                            <th>Teacher</th>
+                            <th>Room</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Student Attendance</th>
+                            <th>Teacher</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var session in ViewBag.RecentSessions)
+                        {
+                            <tr class="session-row @(session.IsActive ? "active-session" : "") @(session.IsUpcoming ? "upcoming-session" : "")">
+                                <td>
+                                    <div class="session-date">
+                                        <strong>@session.FormattedDate</strong>
+                                        @if (session.IsToday)
+                                        {
+                                            <span class="badge bg-primary ms-1">Today</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <small class="text-muted">@session.FormattedTime</small>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@session.CourseName</strong>
+                                        <br><small class="text-muted">@session.CourseCode</small>
+                                    </div>
+                                </td>
+                                <td>@session.TeacherName</td>
+                                <td>
+                                    <span class="badge bg-info bg-opacity-10 text-info">
+                                        <i class="bi bi-geo-alt me-1"></i>@session.RoomName
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (session.SessionType == "Regular")
+                                    {
+                                        <span class="badge session-type-regular">Regular</span>
+                                    }
+                                    else if (session.SessionType == "Makeup")
+                                    {
+                                        <span class="badge session-type-makeup">Makeup</span>
+                                    }
+                                    else if (session.SessionType == "Exam")
+                                    {
+                                        <span class="badge session-type-exam">Exam</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (session.Status == "Scheduled")
+                                    {
+                                        <span class="badge status-badge-scheduled">
+                                            <i class="bi bi-clock me-1"></i>Scheduled
+                                        </span>
+                                    }
+                                    else if (session.Status == "InProgress")
+                                    {
+                                        <span class="badge status-badge-inprogress">
+                                            <i class="bi bi-play-circle me-1"></i>In Progress
+                                        </span>
+                                    }
+                                    else if (session.Status == "Completed")
+                                    {
+                                        <span class="badge status-badge-completed">
+                                            <i class="bi bi-check-circle me-1"></i>Completed
+                                        </span>
+                                    }
+                                    else if (session.Status == "Cancelled")
+                                    {
+                                        <span class="badge status-badge-cancelled">
+                                            <i class="bi bi-x-circle me-1"></i>Cancelled
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="attendance-indicator">
+                                        <span class="@(session.StudentAttendanceRate >= 80 ? "text-success" : session.StudentAttendanceRate >= 50 ? "text-warning" : "text-danger")">
+                                            @session.StudentsPresent/@session.ExpectedStudents
+                                        </span>
+                                        <small class="text-muted">(@session.StudentAttendanceRate%)</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (session.TeacherPresent)
+                                    {
+                                        <i class="bi bi-check-circle text-success" title="Present"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-x-circle text-danger" title="Absent"></i>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No sessions found for the selected criteria.
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="~/js/sessions-charts.js" asp-append-version="true"></script>
+    <script>
+        if (typeof SessionsCharts !== 'undefined') {
+            var statusData = {
+                scheduled: @ViewBag.ScheduledCount,
+                inProgress: @ViewBag.InProgressCount,
+                completed: @ViewBag.CompletedCount,
+                cancelled: @ViewBag.CancelledCount
+            };
+            var trendData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.TrendData));
+            SessionsCharts.init({
+                statusData: statusData,
+                trendData: trendData
+            });
+        }
+    </script>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/sessions.css" asp-append-version="true" />
+}

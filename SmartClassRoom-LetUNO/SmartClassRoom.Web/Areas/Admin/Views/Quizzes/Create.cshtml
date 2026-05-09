@@ -1,0 +1,433 @@
+@model SmartClassRoom.Web.Models.ViewModels.Quizzes.CreateQuizRequest
+@{
+    ViewData["Title"] = "Create Quiz";
+    ViewData["PageTitle"] = "Create Quiz";
+    ViewData["PageIcon"] = "plus-circle";
+    ViewData["PageDescription"] = "Create a new quiz with questions";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-area="Admin" asp-controller="Quizzes" asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+}
+
+<form asp-action="Create" method="post" id="quizForm">
+    @Html.AntiForgeryToken()
+
+    @* Display validation errors *@
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <h5 class="alert-heading">
+                <i class="bi bi-exclamation-triangle me-2"></i>Unable to Create Quiz
+            </h5>
+            <div asp-validation-summary="ModelOnly" class="mb-0"></div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Quiz Details -->
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Quiz Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">Quiz Title</label>
+                        <input asp-for="Title" class="form-control" placeholder="e.g., Chapter 1 Quiz" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="2" placeholder="Optional quiz description"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CourseId" class="form-label">Course</label>
+                            <select asp-for="CourseId" asp-items="ViewBag.Courses" class="form-select">
+                                <option value="">Select Course</option>
+                            </select>
+                            <span asp-validation-for="CourseId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="TimeLimit" class="form-label">Time Limit (minutes)</label>
+                            <input asp-for="TimeLimit" type="number" class="form-control" min="1" max="300" value="30" />
+                            <span asp-validation-for="TimeLimit" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PassingScore" class="form-label">Passing Score (%)</label>
+                            <input asp-for="PassingScore" type="number" class="form-control" min="0" max="100" step="0.1" value="60" />
+                            <span asp-validation-for="PassingScore" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="MaxAttempts" class="form-label">Max Attempts</label>
+                            <input asp-for="MaxAttempts" type="number" class="form-control" min="1" max="10" placeholder="Leave empty for unlimited" />
+                            <span asp-validation-for="MaxAttempts" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input asp-for="ShuffleQuestions" class="form-check-input" type="checkbox" />
+                                <label asp-for="ShuffleQuestions" class="form-check-label">Shuffle Questions</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input asp-for="ShowCorrectAnswers" class="form-check-input" type="checkbox" checked />
+                                <label asp-for="ShowCorrectAnswers" class="form-check-label">Show Correct Answers</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions Section -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-question-circle me-2"></i>Questions
+                        </h5>
+                        <button type="button" class="btn btn-light btn-sm" onclick="addQuestion()">
+                            <i class="bi bi-plus-circle me-1"></i> Add Question
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="questions-container">
+                        <!-- Questions will be added here dynamically -->
+                    </div>
+                    <span id="questions-validation" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-save me-1"></i> Create Quiz
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Sidebar -->
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-light">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Quiz Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">
+                            <strong>Questions:</strong> <span id="question-count">0</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong>Total Points:</strong> <span id="total-points">0</span>
+                        </li>
+                    </ul>
+
+                    <hr />
+
+                    <h6 class="text-primary">Tips</h6>
+                    <ul class="small text-muted">
+                        <li>Add at least one question</li>
+                        <li>Choose between Multiple Choice (4 options) or True/False (2 options)</li>
+                        <li>Select the correct answer for each question</li>
+                        <li>Default points per question: 1.0</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        let questionIndex = 0;
+
+        function addQuestion() {
+            const questionHtml = `
+                <div class="question-item card mb-3" data-index="${questionIndex}">
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>Question ${questionIndex + 1}</strong>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestion(${questionIndex})">
+                                <i class="bi bi-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Question Text</label>
+                            <textarea name="Questions[${questionIndex}].QuestionText" class="form-control" rows="2" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Question Type</label>
+                            <select name="Questions[${questionIndex}].QuestionType" class="form-select" onchange="toggleQuestionType(${questionIndex})" id="question_type_${questionIndex}">
+                                <option value="1" selected>Multiple Choice (4 options)</option>
+                                <option value="2">True or False (2 options)</option>
+                            </select>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-11">
+                                <label class="form-label" id="option1_label_${questionIndex}">Option 1</label>
+                                <input type="text" name="Questions[${questionIndex}].Option1" id="option1_${questionIndex}" class="form-control" required />
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <div class="form-check">
+                                    <input type="radio" name="correct_${questionIndex}" value="1" class="form-check-input" required
+                                           onchange="setCorrectAnswer(${questionIndex}, 1)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-11">
+                                <label class="form-label" id="option2_label_${questionIndex}">Option 2</label>
+                                <input type="text" name="Questions[${questionIndex}].Option2" id="option2_${questionIndex}" class="form-control" required />
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <div class="form-check">
+                                    <input type="radio" name="correct_${questionIndex}" value="2" class="form-check-input" required
+                                           onchange="setCorrectAnswer(${questionIndex}, 2)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3 mc-only-options" id="option3_container_${questionIndex}">
+                            <div class="col-md-11">
+                                <label class="form-label">Option 3</label>
+                                <input type="text" name="Questions[${questionIndex}].Option3" id="option3_${questionIndex}" class="form-control mc-option" />
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <div class="form-check">
+                                    <input type="radio" name="correct_${questionIndex}" value="3" class="form-check-input mc-correct"
+                                           onchange="setCorrectAnswer(${questionIndex}, 3)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3 mc-only-options" id="option4_container_${questionIndex}">
+                            <div class="col-md-11">
+                                <label class="form-label">Option 4</label>
+                                <input type="text" name="Questions[${questionIndex}].Option4" id="option4_${questionIndex}" class="form-control mc-option" />
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <div class="form-check">
+                                    <input type="radio" name="correct_${questionIndex}" value="4" class="form-check-input mc-correct"
+                                           onchange="setCorrectAnswer(${questionIndex}, 4)" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="Questions[${questionIndex}].CorrectAnswer" id="correct_answer_${questionIndex}" value="" />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Points</label>
+                                <input type="number" name="Questions[${questionIndex}].Points" class="form-control" min="0.1" max="100" step="0.1" value="1.0" onchange="updateSummary()" />
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label">Explanation (Optional)</label>
+                            <textarea name="Questions[${questionIndex}].Explanation" class="form-control" rows="2" placeholder="Explain the correct answer"></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('#questions-container').append(questionHtml);
+            questionIndex++;
+            updateSummary();
+        }
+
+        function removeQuestion(index) {
+            $(`.question-item[data-index="${index}"]`).remove();
+            updateSummary();
+            renumberQuestions();
+        }
+
+        function renumberQuestions() {
+            $('.question-item').each(function(i) {
+                $(this).find('.card-header strong').text('Question ' + (i + 1));
+            });
+        }
+
+        function setCorrectAnswer(questionIndex, answerNumber) {
+            $(`#correct_answer_${questionIndex}`).val(answerNumber);
+        }
+
+        function toggleQuestionType(questionIndex) {
+            const questionType = parseInt($(`#question_type_${questionIndex}`).val());
+            const questionCard = $(`.question-item[data-index="${questionIndex}"]`);
+
+            if (questionType === 2) {
+                // True/False selected
+                questionCard.find(`#option3_container_${questionIndex}`).hide();
+                questionCard.find(`#option4_container_${questionIndex}`).hide();
+
+                // Remove required attribute from Option 3 & 4
+                questionCard.find(`#option3_${questionIndex}`).removeAttr('required');
+                questionCard.find(`#option4_${questionIndex}`).removeAttr('required');
+
+                // Clear Option 3 & 4 values
+                questionCard.find(`#option3_${questionIndex}`).val('');
+                questionCard.find(`#option4_${questionIndex}`).val('');
+
+                // Set True/False labels for Option 1 & 2
+                questionCard.find(`#option1_label_${questionIndex}`).text('Option 1 (True)');
+                questionCard.find(`#option2_label_${questionIndex}`).text('Option 2 (False)');
+
+                // Pre-fill with True/False
+                questionCard.find(`#option1_${questionIndex}`).val('True');
+                questionCard.find(`#option2_${questionIndex}`).val('False');
+
+                // Uncheck Option 3 & 4 radio buttons if selected
+                questionCard.find(`input[name="correct_${questionIndex}"][value="3"]`).prop('checked', false);
+                questionCard.find(`input[name="correct_${questionIndex}"][value="4"]`).prop('checked', false);
+
+                // Reset correct answer if it was 3 or 4
+                const currentCorrect = parseInt($(`#correct_answer_${questionIndex}`).val());
+                if (currentCorrect > 2) {
+                    $(`#correct_answer_${questionIndex}`).val('');
+                }
+            } else {
+                // Multiple Choice selected
+                questionCard.find(`#option3_container_${questionIndex}`).show();
+                questionCard.find(`#option4_container_${questionIndex}`).show();
+
+                // Add required attribute back to Option 3 & 4
+                questionCard.find(`#option3_${questionIndex}`).attr('required', 'required');
+                questionCard.find(`#option4_${questionIndex}`).attr('required', 'required');
+
+                // Reset labels for Option 1 & 2
+                questionCard.find(`#option1_label_${questionIndex}`).text('Option 1');
+                questionCard.find(`#option2_label_${questionIndex}`).text('Option 2');
+
+                // Clear pre-filled True/False values
+                questionCard.find(`#option1_${questionIndex}`).val('');
+                questionCard.find(`#option2_${questionIndex}`).val('');
+            }
+        }
+
+        function updateSummary() {
+            const questionCount = $('.question-item').length;
+            let totalPoints = 0;
+
+            $('.question-item').each(function() {
+                const points = parseFloat($(this).find('input[name*="Points"]').val()) || 0;
+                totalPoints += points;
+            });
+
+            $('#question-count').text(questionCount);
+            $('#total-points').text(totalPoints.toFixed(1));
+        }
+
+        // Form validation
+        $('#quizForm').on('submit', function(e) {
+            const questionCount = $('.question-item').length;
+
+            if (questionCount === 0) {
+                e.preventDefault();
+                $('#questions-validation').text('Please add at least one question');
+                $('html, body').animate({
+                    scrollTop: $('#questions-container').offset().top - 100
+                }, 500);
+                return false;
+            }
+
+            // Validate all questions have correct answers selected
+            let allQuestionsValid = true;
+            $('.question-item').each(function() {
+                const index = $(this).data('index');
+                const correctAnswer = $(`#correct_answer_${index}`).val();
+                if (!correctAnswer) {
+                    allQuestionsValid = false;
+                    $(this).find('.card-header').addClass('border-danger');
+                }
+            });
+
+            if (!allQuestionsValid) {
+                e.preventDefault();
+                alert('Please select the correct answer for all questions');
+                return false;
+            }
+
+            $('#questions-validation').text('');
+            return true;
+        });
+
+        // Add first question on page load or re-populate from model
+        $(document).ready(function() {
+            @if (Model != null && Model.Questions != null && Model.Questions.Any())
+            {
+                <text>
+                // Re-populate questions from model (validation failure scenario)
+                var modelQuestions = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Questions));
+
+                questionIndex = 0;
+                modelQuestions.forEach(function(q) {
+                    addQuestion(); // Adds empty question
+
+                    // Set question type
+                    const qType = q.questionType || 1; // Default to MultipleChoice
+                    $(`select[name="Questions[${questionIndex}].QuestionType"]`).val(qType);
+                    toggleQuestionType(questionIndex); // Apply type-specific UI changes
+
+                    // Populate with model data
+                    $(`textarea[name="Questions[${questionIndex}].QuestionText"]`).val(q.questionText || '');
+                    $(`input[name="Questions[${questionIndex}].Option1"]`).val(q.option1 || '');
+                    $(`input[name="Questions[${questionIndex}].Option2"]`).val(q.option2 || '');
+
+                    if (qType === 1) {
+                        // Multiple Choice - populate all 4 options
+                        $(`input[name="Questions[${questionIndex}].Option3"]`).val(q.option3 || '');
+                        $(`input[name="Questions[${questionIndex}].Option4"]`).val(q.option4 || '');
+                    }
+
+                    $(`input[name="Questions[${questionIndex}].Points"]`).val(q.points || 1.0);
+                    $(`textarea[name="Questions[${questionIndex}].Explanation"]`).val(q.explanation || '');
+
+                    // Set correct answer radio button
+                    if (q.correctAnswer && q.correctAnswer > 0) {
+                        $(`input[name="correct_${questionIndex}"][value="${q.correctAnswer}"]`).prop('checked', true);
+                        $(`#correct_answer_${questionIndex}`).val(q.correctAnswer);
+                    }
+
+                    questionIndex++;
+                });
+
+                updateSummary();
+                </text>
+            }
+            else
+            {
+                <text>
+                // Add first empty question as usual
+                addQuestion();
+                </text>
+            }
+        });
+    </script>
+}

@@ -1,0 +1,142 @@
+@{
+    var teachers = ViewBag.Teachers as IEnumerable<SmartClassRoom.Web.Models.Entities.Users.Teacher>;
+
+    ViewData["Title"] = "Teacher Attendance Report";
+    ViewData["PageTitle"] = "Teacher Attendance Report";
+    ViewData["PageDescription"] = "Track teacher attendance and punctuality for their sessions";
+    ViewData["PageIcon"] = "person-workspace";
+}
+
+<div class="card">
+    <div class="card-header bg-orange text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-person-workspace me-2"></i>
+            Generate Teacher Attendance Report
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            This report tracks teacher attendance for their scheduled sessions, including late arrivals and missed sessions.
+        </div>
+
+        <form method="get" asp-action="GenerateTeacherAttendancePdf" id="reportForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Select Teacher <span class="text-danger">*</span></label>
+                    <select name="teacherId" id="teacherSelect" class="form-select" required>
+                        <option value="">-- Select a Teacher --</option>
+                        @if (teachers != null)
+                        {
+                            @foreach (var teacher in teachers.OrderBy(t => t.FullName))
+                            {
+                                <option value="@teacher.Id">
+                                    @teacher.FullName (@teacher.Department?.Name ?? "No Department")
+                                </option>
+                            }
+                        }
+                    </select>
+                    <small class="text-muted">Choose the teacher to generate the report for</small>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Start Date (Optional)</label>
+                    <input type="date" name="startDate" class="form-control" id="startDate" />
+                    <small class="text-muted">Leave blank for all sessions</small>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">End Date (Optional)</label>
+                    <input type="date" name="endDate" class="form-control" id="endDate" />
+                    <small class="text-muted">Leave blank for all sessions</small>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label fw-bold">Export Format</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-file-pdf me-2"></i>
+                            Download PDF
+                        </button>
+                        <button type="submit"
+                                formaction="@Url.Action("GenerateTeacherAttendanceExcel")"
+                                class="btn btn-success">
+                            <i class="bi bi-file-excel me-2"></i>
+                            Download Excel
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Back to Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title">Report Contents</h6>
+        <p class="text-muted">The teacher attendance report will include:</p>
+        <ul class="text-muted">
+            <li><strong>Teacher Information:</strong> Name and department</li>
+            <li><strong>Summary Statistics:</strong> Total scheduled sessions, sessions attended, missed, and late arrivals</li>
+            <li><strong>Attendance Percentage:</strong> Overall attendance rate</li>
+            <li><strong>Session Details:</strong> For each session:
+                <ul>
+                    <li>Date, time, and course information</li>
+                    <li>Room location</li>
+                    <li>Actual check-in and check-out times</li>
+                    <li>Status (Present/Absent/Late)</li>
+                    <li>Minutes late (if applicable)</li>
+                </ul>
+            </li>
+        </ul>
+        <div class="alert alert-warning mt-3">
+            <i class="bi bi-clock-history me-2"></i>
+            <strong>Late Arrivals:</strong> Teachers who check in after the scheduled session start time are marked as "Late" and the delay is calculated in minutes.
+        </div>
+        <div class="alert alert-danger mt-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Absent Status:</strong> Sessions without any teacher attendance record are marked as "Absent".
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .bg-orange {
+            background-color: #fd7e14 !important;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .form-label {
+            margin-bottom: 0.5rem;
+        }
+
+        small.text-muted {
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .btn {
+            font-weight: 500;
+        }
+
+        .alert-info {
+            border-left: 4px solid #0dcaf0;
+        }
+
+        .alert-warning {
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-danger {
+            border-left: 4px solid #dc3545;
+        }
+    </style>
+}

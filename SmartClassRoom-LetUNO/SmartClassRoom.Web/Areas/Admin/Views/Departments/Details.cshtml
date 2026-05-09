@@ -1,0 +1,350 @@
+@model SmartClassRoom.Web.Models.Entities.Academic.Department
+
+@{
+    ViewData["Title"] = "Department Details";
+    ViewData["PageTitle"] = Model.Name;
+    ViewData["PageIcon"] = "diagram-3";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+    var statistics = ViewBag.Statistics as SmartClassRoom.Web.Data.Repositories.Interfaces.DepartmentStatistics;
+}
+
+@section PageActions {
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+        <i class="bi bi-pencil"></i> Edit
+    </a>
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="row g-4">
+    <!-- Left Column: Department Info -->
+    <div class="col-lg-4">
+        <div class="card detail-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle"></i> Department Information
+                </h5>
+
+                <div class="detail-group">
+                    <label>Name</label>
+                    <p><strong>@Model.Name</strong></p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Code))
+                {
+                    <div class="detail-group">
+                        <label>Code</label>
+                        <p><span class="badge bg-secondary">@Model.Code</span></p>
+                    </div>
+                }
+
+                <div class="detail-group">
+                    <label>University</label>
+                    <p>
+                        <i class="bi bi-building"></i>
+                        <a asp-area="Admin" asp-controller="Universities" asp-action="Details" asp-route-id="@Model.UniversityId">
+                            @Model.University.Name
+                        </a>
+                    </p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="detail-group">
+                        <label>Description</label>
+                        <p>@Model.Description</p>
+                    </div>
+                }
+
+                <div class="detail-group">
+                    <label>Head of Department</label>
+                    <p>
+                        @if (Model.HeadOfDepartment != null)
+                        {
+                            <i class="bi bi-person-badge"></i>
+                            <a asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@Model.HeadOfDepartmentId">
+                                @Model.HeadOfDepartment.FullName
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not Assigned</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Status</label>
+                    <p>
+                        @if (Model.IsActive)
+                        {
+                            <span class="status-badge status-active">Active</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge status-inactive">Inactive</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Created Date</label>
+                    <p>@Model.CreatedAt.ToString("MMMM dd, yyyy")</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Head of Department Assignment Card -->
+        <div class="card detail-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-person-badge"></i> Assign Head
+                </h5>
+
+                <form asp-action="AssignHead" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="departmentId" value="@Model.Id" />
+
+                    <div class="mb-3">
+                        <label for="teacherId" class="form-label">Head of Department</label>
+                        <select name="teacherId" id="teacherId" class="form-select" asp-items="ViewBag.AvailableTeachers">
+                            <option value="">-- No Head Assigned --</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            Only active teachers from this department are shown
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-check-circle"></i> Update Head Assignment
+                    </button>
+                </form>
+
+                <hr class="my-3" />
+
+                <div class="detail-actions">
+                    @if (Model.IsActive)
+                    {
+                        <form asp-action="Deactivate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-warning btn-sm w-100"
+                                    onclick="return confirm('Are you sure you want to deactivate this department? Make sure there are no active students, teachers, or courses.')">
+                                <i class="bi bi-slash-circle"></i> Deactivate Department
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Activate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-success btn-sm w-100"
+                                    onclick="return confirm('Are you sure you want to activate this department?')">
+                                <i class="bi bi-check-circle"></i> Activate Department
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Statistics & Related Data -->
+    <div class="col-lg-8">
+        <!-- Statistics Card -->
+        @if (statistics != null)
+        {
+            <div class="card stats-card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-graph-up"></i> Statistics
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-info">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <h3>@statistics.StudentCount</h3>
+                                    <p>Students</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-warning">
+                                    <i class="bi bi-person-badge"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <h3>@statistics.TeacherCount</h3>
+                                    <p>Teachers</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-primary">
+                                    <i class="bi bi-book"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <h3>@statistics.CourseCount</h3>
+                                    <p>Courses</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-success">
+                                    <i class="bi bi-calendar3"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <h3>@statistics.ActiveCourseOfferingsCount</h3>
+                                    <p>Active Offerings</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Recent Students Card -->
+        <div class="card data-card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-people"></i> Students
+                    </h5>
+                    <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-departmentId="@Model.Id" asp-route-userType="Student" class="btn btn-sm btn-outline-primary">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                @if (Model.Students.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Code</th>
+                                    <th>Level</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var student in Model.Students.Take(5).OrderBy(s => s.FullName))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@student.Id">
+                                                @student.FullName
+                                            </a>
+                                        </td>
+                                        <td><span class="badge bg-secondary">@student.StudentCode</span></td>
+                                        <td>@(student.Level?.Name ?? "N/A")</td>
+                                        <td>
+                                            @if (student.IsActive)
+                                            {
+                                                <span class="status-badge status-active">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge status-inactive">Inactive</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (Model.Students.Count > 5)
+                    {
+                        <p class="text-muted text-center mt-2 mb-0">
+                            Showing 5 of @Model.Students.Count students
+                        </p>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state-small">
+                        <i class="bi bi-people"></i>
+                        <p>No students found in this department.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Recent Teachers Card -->
+        <div class="card data-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-person-badge"></i> Teachers
+                    </h5>
+                    <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-departmentId="@Model.Id" asp-route-userType="Teacher" class="btn btn-sm btn-outline-primary">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                @if (Model.Teachers.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Code</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var teacher in Model.Teachers.Take(5).OrderBy(t => t.FullName))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@teacher.Id">
+                                                @teacher.FullName
+                                            </a>
+                                            @if (teacher.Id == Model.HeadOfDepartmentId)
+                                            {
+                                                <span class="badge bg-primary ms-1">HOD</span>
+                                            }
+                                        </td>
+                                        <td><span class="badge bg-secondary">@teacher.EmployeeCode</span></td>
+                                        <td>@(teacher.Title ?? "N/A")</td>
+                                        <td>
+                                            @if (teacher.IsActive)
+                                            {
+                                                <span class="status-badge status-active">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge status-inactive">Inactive</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (Model.Teachers.Count > 5)
+                    {
+                        <p class="text-muted text-center mt-2 mb-0">
+                            Showing 5 of @Model.Teachers.Count teachers
+                        </p>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state-small">
+                        <i class="bi bi-person-badge"></i>
+                        <p>No teachers found in this department.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

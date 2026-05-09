@@ -1,0 +1,341 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Quizzes.QuizAttempt>
+@{
+    ViewData["Title"] = "Quiz Submissions";
+    ViewData["PageTitle"] = "Quiz Submissions";
+    ViewData["PageIcon"] = "clipboard-check";
+    ViewData["PageDescription"] = "View student submissions and results";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+    var assignment = ViewBag.Assignment as SmartClassRoom.Web.Models.Entities.Quizzes.QuizAssignment;
+}
+
+@section PageActions {
+    <a asp-area="Admin" asp-controller="Quizzes" asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+}
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Assignment Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Quiz Title:</strong><br />
+                        @assignment?.Quiz?.Title
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Course Offering:</strong><br />
+                        @assignment?.CourseOffering?.Course?.Name - @assignment?.CourseOffering?.Term?.Name
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Available Period:</strong><br />
+                        @assignment?.AvailableFrom.ToString("MMM dd, yyyy") - @assignment?.AvailableUntil.ToString("MMM dd, yyyy")
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Status:</strong><br />
+                        @if (assignment?.IsPublished == true)
+                        {
+                            <span class="badge bg-success">Published</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Draft</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-people me-2"></i>Student Submissions (@Model.Count())
+                </h5>
+                <div>
+                    <button class="btn btn-light btn-sm" onclick="exportToCSV()">
+                        <i class="bi bi-download me-1"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                @if (!Model.Any())
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No submissions yet. Students will appear here after they submit their attempts.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="submissionsTable">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Student Name</th>
+                                    <th>Attempt #</th>
+                                    <th>Score</th>
+                                    <th>Percentage</th>
+                                    <th>Status</th>
+                                    <th>Time Taken</th>
+                                    <th>Started At</th>
+                                    <th>Submitted At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var attempt in Model.OrderByDescending(a => a.SubmittedAt))
+                                {
+                                    var timeTaken = attempt.SubmittedAt.HasValue && attempt.StartedAt != null
+                                        ? (attempt.SubmittedAt.Value - attempt.StartedAt).TotalMinutes
+                                        : 0;
+
+                                    var statusClass = attempt.Status == "Graded" && attempt.Percentage >= assignment?.Quiz?.PassingScore
+                                        ? "success"
+                                        : attempt.Status == "Graded"
+                                        ? "danger"
+                                        : "warning";
+
+                                    var statusText = attempt.Status == "Graded" && attempt.Percentage >= assignment?.Quiz?.PassingScore
+                                        ? "Passed"
+                                        : attempt.Status == "Graded"
+                                        ? "Failed"
+                                        : attempt.Status;
+
+                                    <tr>
+                                        <td>@attempt.Student?.StudentCode</td>
+                                        <td>@attempt.Student?.FullName</td>
+                                        <td>
+                                            <span class="badge bg-primary">@attempt.AttemptNumber</span>
+                                        </td>
+                                        <td>
+                                            @if (attempt.Score.HasValue && attempt.TotalPoints.HasValue)
+                                            {
+                                                <strong>@attempt.Score.Value.ToString("F1")</strong> <text>/</text> @attempt.TotalPoints.Value.ToString("F1")
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (attempt.Percentage.HasValue)
+                                            {
+                                                <span class="badge bg-@statusClass">@attempt.Percentage.Value.ToString("F1")%</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@statusClass">@statusText</span>
+                                        </td>
+                                        <td>
+                                            @if (timeTaken > 0)
+                                            {
+                                                @timeTaken.ToString("F1") <span class="text-muted">min</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <small>@attempt.StartedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                                        </td>
+                                        <td>
+                                            @if (attempt.SubmittedAt.HasValue)
+                                            {
+                                                <small>@attempt.SubmittedAt.Value.ToString("MMM dd, yyyy HH:mm")</small>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">In Progress</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (attempt.Status == "Graded")
+                                            {
+                                                <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(@attempt.Id)">
+                                                    <i class="bi bi-eye"></i> View
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Statistics Summary -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Statistics Summary</h6>
+                                    <div class="row text-center">
+                                        <div class="col-md-2">
+                                            <div class="stat-box">
+                                                <h3 class="text-primary">@Model.Select(a => a.StudentId).Distinct().Count()</h3>
+                                                <small class="text-muted">Students</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="stat-box">
+                                                <h3 class="text-info">@Model.Count()</h3>
+                                                <small class="text-muted">Total Attempts</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="stat-box">
+                                                <h3 class="text-success">@Model.Count(a => a.Status == "Graded" && a.Percentage >= assignment?.Quiz?.PassingScore)</h3>
+                                                <small class="text-muted">Passed</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="stat-box">
+                                                <h3 class="text-danger">@Model.Count(a => a.Status == "Graded" && a.Percentage < assignment?.Quiz?.PassingScore)</h3>
+                                                <small class="text-muted">Failed</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="stat-box">
+                                                <h3 class="text-primary">
+                                                    @if (Model.Any(a => a.Percentage.HasValue))
+                                                    {
+                                                        @Model.Where(a => a.Percentage.HasValue).Average(a => a.Percentage!.Value).ToString("F1")<text>%</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <text>-</text>
+                                                    }
+                                                </h3>
+                                                <small class="text-muted">Avg Score</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="stat-box">
+                                                <h3 class="text-warning">@Model.Count(a => a.Status == "InProgress")</h3>
+                                                <small class="text-muted">In Progress</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="detailsModalLabel">
+                    <i class="bi bi-clipboard-data me-2"></i>Attempt Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detailsContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable
+            $('#submissionsTable').DataTable({
+                order: [[8, 'desc']], // Sort by submitted date descending
+                pageLength: 25,
+                language: {
+                    emptyTable: "No submissions yet"
+                }
+            });
+        });
+
+        function viewDetails(attemptId) {
+            $('#detailsModal').modal('show');
+            $('#detailsContent').html('<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+
+            // Fetch attempt details via AJAX
+            $.get(`/Admin/Quizzes/AttemptDetails/${attemptId}`)
+                .done(function(data) {
+                    $('#detailsContent').html(data);
+                })
+                .fail(function() {
+                    $('#detailsContent').html('<div class="alert alert-danger">Failed to load attempt details.</div>');
+                });
+        }
+
+        function exportToCSV() {
+            const table = document.getElementById('submissionsTable');
+            let csv = [];
+            const rows = table.querySelectorAll('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = [];
+                const cols = rows[i].querySelectorAll('td, th');
+
+                for (let j = 0; j < cols.length - 1; j++) { // Skip last column (Actions)
+                    let data = cols[j].innerText.replace(/,/g, ''); // Remove commas
+                    row.push(data);
+                }
+
+                csv.push(row.join(','));
+            }
+
+            // Download CSV
+            const csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+            const downloadLink = document.createElement('a');
+            downloadLink.download = 'quiz_submissions_@(assignment?.Id)_@(DateTime.Now.ToString("yyyyMMdd")).csv';
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+
+    <style>
+        .stat-box {
+            padding: 15px;
+        }
+
+        .stat-box h3 {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+    </style>
+}

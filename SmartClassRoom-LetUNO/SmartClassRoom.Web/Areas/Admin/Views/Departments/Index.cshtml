@@ -1,0 +1,171 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Department>
+
+@{
+    ViewData["Title"] = "Departments";
+    ViewData["PageTitle"] = "Departments";
+    ViewData["PageIcon"] = "diagram-3";
+    ViewData["PageDescription"] = "Manage all departments in the system";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Department
+    </a>
+}
+
+<!-- Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="universityId" class="form-label">University</label>
+                <select name="universityId" id="universityId" class="form-select">
+                    <option value="">All Universities</option>
+                    @foreach (var university in ViewBag.Universities as SelectList)
+                    {
+                        <option value="@university.Value" selected="@(university.Value == ViewBag.SelectedUniversityId?.ToString())">
+                            @university.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="isActive" class="form-label">Status</label>
+                <select name="isActive" id="isActive" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="true" selected="@(ViewBag.SelectedIsActive == true)">Active</option>
+                    <option value="false" selected="@(ViewBag.SelectedIsActive == false)">Inactive</option>
+                </select>
+            </div>
+
+            <div class="col-md-5 d-flex align-items-end justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Departments Table -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th asp-sortable-column="Name" asp-column-display="Department Name"></th>
+                            <th asp-sortable-column="Code" asp-column-display="Code"></th>
+                            <th asp-sortable-column="University" asp-column-display="University"></th>
+                            <th>Head of Department</th>
+                            <th>Students/Teachers</th>
+                            <th asp-sortable-column="Status" asp-column-display="Status"></th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var department in Model)
+                        {
+                            <tr>
+                                <td><strong>@department.Name</strong></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(department.Code))
+                                    {
+                                        <span class="badge bg-secondary">@department.Code</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+                                </td>
+                                <td>@department.University.Name</td>
+                                <td>
+                                    @if (department.HeadOfDepartment != null)
+                                    {
+                                        <span><i class="bi bi-person-badge"></i> @department.HeadOfDepartment.FullName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not Assigned</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info" title="Students">@department.Students.Count <i class="bi bi-people"></i></span>
+                                    <span class="badge bg-warning" title="Teachers">@department.Teachers.Count <i class="bi bi-person-badge"></i></span>
+                                </td>
+                                <td>
+                                    @if (department.IsActive)
+                                    {
+                                        <span class="status-badge active">
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge inactive">
+                                            <i class="bi bi-x-circle me-1"></i>Inactive
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a asp-action="Details" asp-route-id="@department.Id" class="action-btn info" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@department.Id" class="action-btn warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        @if (department.IsActive)
+                                        {
+                                            <form asp-action="Deactivate" asp-route-id="@department.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn danger" title="Deactivate"
+                                                        onclick="return confirm('Are you sure you want to deactivate this department?')">
+                                                    <i class="bi bi-slash-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Activate" asp-route-id="@department.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn success" title="Activate"
+                                                        onclick="return confirm('Are you sure you want to activate this department?')">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.Pagination != null)
+            {
+                @await Html.PartialAsync("_Pagination", ViewBag.Pagination as SmartClassRoom.Web.Models.ViewModels.Common.PaginationViewModel)
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-diagram-3"></i>
+                <h3>No Departments Found</h3>
+                <p>There are no departments matching your criteria.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add First Department
+                </a>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,188 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Scheduling.Timetable>
+@{
+    ViewData["Title"] = "Timetables";
+    ViewData["PageTitle"] = "Timetables";
+    ViewData["PageIcon"] = "table";
+    ViewData["PageDescription"] = "Manage academic timetables and schedules";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-area="Admin" asp-controller="Timetables" asp-action="Generate" class="btn btn-primary">
+        <i class="bi bi-lightning-charge"></i> Generate Timetable
+    </a>
+}
+
+<!-- Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form asp-area="Admin" asp-controller="Timetables" asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="departmentId" class="form-label">Department</label>
+                <select name="departmentId" id="departmentId" class="form-select">
+                    <option value="">All Departments</option>
+                    @foreach (var dept in ViewBag.Departments as SelectList)
+                    {
+                        <option value="@dept.Value">@dept.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="levelId" class="form-label">Level</label>
+                <select name="levelId" id="levelId" class="form-select">
+                    <option value="">All Levels</option>
+                    @foreach (var level in ViewBag.Levels as SelectList)
+                    {
+                        <option value="@level.Value">@level.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="sectionId" class="form-label">Section</label>
+                <select name="sectionId" id="sectionId" class="form-select">
+                    <option value="">All Sections</option>
+                    @foreach (var sec in ViewBag.Sections as SelectList)
+                    {
+                        <option value="@sec.Value">@sec.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="termId" class="form-label">Term</label>
+                <select name="termId" id="termId" class="form-select">
+                    <option value="">All Terms</option>
+                    @foreach (var term in ViewBag.Terms as SelectList)
+                    {
+                        <option value="@term.Value">@term.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a asp-area="Admin" asp-controller="Timetables" asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Timetables Table -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Level / Section</th>
+                            <th>Term</th>
+                            <th>Total Slots</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var timetable in Model)
+                        {
+                            <tr>
+                                <td><strong>@timetable.Name</strong></td>
+                                <td>@timetable.Department?.Name</td>
+                                <td>
+                                    <span class="badge bg-secondary">@timetable.Level?.Name</span>
+                                    <span class="badge bg-info">@timetable.Section?.Name</span>
+                                </td>
+                                <td>@timetable.Term?.Name</td>
+                                <td>
+                                    <span class="badge bg-primary">@timetable.ScheduledSlots?.Count() slots</span>
+                                </td>
+                                <td>
+                                    @if (timetable.Status == "Published")
+                                    {
+                                        <span class="status-badge active">
+                                            <i class="bi bi-check-circle me-1"></i>Published
+                                        </span>
+                                    }
+                                    else if (timetable.Status == "Draft")
+                                    {
+                                        <span class="status-badge warning">
+                                            <i class="bi bi-pencil-square me-1"></i>Draft
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge inactive">
+                                            <i class="bi bi-archive me-1"></i>@timetable.Status
+                                        </span>
+                                    }
+                                </td>
+                                <td>@timetable.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a asp-area="Admin" asp-controller="Timetables" asp-action="Details" asp-route-id="@timetable.Id"
+                                           class="btn btn-sm btn-outline-primary" title="View/Edit">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                onclick="deleteTimetable(@timetable.Id, '@timetable.Status')" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-table" style="font-size: 4rem; color: var(--bs-secondary);"></i>
+                <p class="text-muted mt-3">No timetables found. Generate your first timetable to get started.</p>
+                <a asp-area="Admin" asp-controller="Timetables" asp-action="Generate" class="btn btn-primary mt-2">
+                    <i class="bi bi-lightning-charge"></i> Generate Timetable
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function deleteTimetable(id, status) {
+            let message = 'Are you sure you want to delete this timetable?';
+
+            if (status === 'Published') {
+                message = 'WARNING: This timetable is published!\n\n' +
+                         'Deleting it will also delete all associated sessions and attendance records.\n\n' +
+                         'Are you sure you want to proceed?';
+            }
+
+            if (confirm(message)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '@Url.Action("Delete")/' + id;
+
+                const token = document.createElement('input');
+                token.type = 'hidden';
+                token.name = '__RequestVerificationToken';
+                token.value = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                form.appendChild(token);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+}

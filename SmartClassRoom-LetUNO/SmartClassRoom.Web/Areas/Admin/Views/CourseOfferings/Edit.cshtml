@@ -1,0 +1,114 @@
+@model SmartClassRoom.Web.Models.ViewModels.Offerings.EditOfferingRequest
+
+@{
+    ViewData["Title"] = "Edit Course Offering";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="page-title">Edit Course Offering</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index">Course Offerings</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="TermId" class="form-label">Term *</label>
+                            <select asp-for="TermId" class="form-select" asp-items="@ViewBag.Terms">
+                                <option value="">-- Select Term --</option>
+                            </select>
+                            <span asp-validation-for="TermId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CourseId" class="form-label">Course *</label>
+                            <select asp-for="CourseId" class="form-select" asp-items="@ViewBag.Courses">
+                                <option value="">-- Select Course --</option>
+                            </select>
+                            <span asp-validation-for="CourseId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TeacherId" class="form-label">Teacher *</label>
+                            <select asp-for="TeacherId" class="form-select" asp-items="@ViewBag.Teachers">
+                                <option value="">-- Select Teacher --</option>
+                            </select>
+                            <span asp-validation-for="TeacherId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="SectionId" class="form-label">Section (Optional)</label>
+                            <select asp-for="SectionId" class="form-select" asp-items="@ViewBag.Sections">
+                                <option value="">-- Select Section --</option>
+                            </select>
+                            <span asp-validation-for="SectionId" class="text-danger"></span>
+                            <div class="form-text">Leave empty if this offering is not section-specific</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="SessionsPerWeek" class="form-label">Sessions Per Week *</label>
+                                    <input asp-for="SessionsPerWeek" type="number" class="form-control" min="1" max="7" />
+                                    <span asp-validation-for="SessionsPerWeek" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="MaxStudents" class="form-label">Max Students *</label>
+                                    <input asp-for="MaxStudents" type="number" class="form-control" min="1" max="500" />
+                                    <span asp-validation-for="MaxStudents" class="text-danger"></span>
+                                    <div class="form-text">Cannot be reduced below current enrollment count</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Status" class="form-label">Status *</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="Active">Active</option>
+                                <option value="Upcoming">Upcoming</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label">Notes</label>
+                            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                            <div class="form-text">Additional information about this offering (optional)</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

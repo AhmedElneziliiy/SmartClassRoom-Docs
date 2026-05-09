@@ -1,0 +1,24 @@
+@{
+    ViewData["Title"] = "Access Denied";
+    ViewData["HeaderMessage"] = "Access Denied";
+    Layout = "_LoginLayout";
+}
+
+<div class="text-center">
+    <div class="mb-4">
+        <i class="bi bi-shield-exclamation" style="font-size: 5rem; color: #dc3545;"></i>
+    </div>
+    <h3 class="text-danger mb-3">Access Denied</h3>
+    <p class="text-muted mb-4">
+        You don't have permission to access this resource.
+    </p>
+    <div class="d-grid gap-2">
+        <a asp-action="Login" asp-controller="Account" class="btn btn-login">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Login to Continue
+        </a>
+    </div>
+</div>
+
+@section Footer {
+    <p class="mb-0">Need help? <a href="/Account/Login">Contact Administrator</a></p>
+}

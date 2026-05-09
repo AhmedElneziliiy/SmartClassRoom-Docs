@@ -1,0 +1,214 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Section>
+
+@{
+    ViewData["Title"] = "Sections";
+    ViewData["PageTitle"] = "Sections";
+    ViewData["PageIcon"] = "collection";
+    ViewData["PageDescription"] = "Manage all sections in the system";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Section
+    </a>
+}
+
+<!-- Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3" id="filterForm">
+            <div class="col-md-3">
+                <label for="departmentId" class="form-label">Department</label>
+                <select name="departmentId" id="departmentId" class="form-select">
+                    <option value="">All Departments</option>
+                    @foreach (var department in ViewBag.Departments as SelectList)
+                    {
+                        <option value="@department.Value" selected="@(department.Value == ViewBag.SelectedDepartmentId?.ToString())">
+                            @department.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="levelId" class="form-label">Level</label>
+                <select name="levelId" id="levelId" class="form-select">
+                    <option value="">All Levels</option>
+                    @foreach (var level in ViewBag.Levels as SelectList)
+                    {
+                        <option value="@level.Value" selected="@(level.Value == ViewBag.SelectedLevelId?.ToString())">
+                            @level.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="isActive" class="form-label">Status</label>
+                <select name="isActive" id="isActive" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="true" selected="@(ViewBag.SelectedIsActive == true)">Active</option>
+                    <option value="false" selected="@(ViewBag.SelectedIsActive == false)">Inactive</option>
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Sections Table -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th asp-sortable-column="Name" asp-column-display="Section Name"></th>
+                            <th asp-sortable-column="Code" asp-column-display="Code"></th>
+                            <th asp-sortable-column="Level" asp-column-display="Level"></th>
+                            <th>Department</th>
+                            <th asp-sortable-column="Capacity" asp-column-display="Capacity"></th>
+                            <th>Students/Groups</th>
+                            <th asp-sortable-column="Status" asp-column-display="Status"></th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sec in Model)
+                        {
+                            <tr>
+                                <td><strong>@sec.Name</strong></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(sec.Code))
+                                    {
+                                        <span class="badge bg-secondary">@sec.Code</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+                                </td>
+                                <td>@sec.Level.Name</td>
+                                <td>@sec.Level.Department.Name</td>
+                                <td>
+                                    @if (sec.Capacity.HasValue)
+                                    {
+                                        <span class="badge bg-info">@sec.Capacity <i class="bi bi-people"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No Limit</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-success" title="Students">@sec.Students.Count <i class="bi bi-people"></i></span>
+                                    <span class="badge bg-primary" title="Groups">@sec.Groups.Count <i class="bi bi-people-fill"></i></span>
+                                </td>
+                                <td>
+                                    @if (sec.IsActive)
+                                    {
+                                        <span class="status-badge active">
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge inactive">
+                                            <i class="bi bi-x-circle me-1"></i>Inactive
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a asp-action="Details" asp-route-id="@sec.Id" class="action-btn info" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@sec.Id" class="action-btn warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        @if (sec.IsActive)
+                                        {
+                                            <form asp-action="Deactivate" asp-route-id="@sec.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn danger" title="Deactivate"
+                                                        onclick="return confirm('Are you sure you want to deactivate this section?')">
+                                                    <i class="bi bi-slash-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Activate" asp-route-id="@sec.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn success" title="Activate"
+                                                        onclick="return confirm('Are you sure you want to activate this section?')">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.Pagination != null)
+            {
+                @await Html.PartialAsync("_Pagination", ViewBag.Pagination as SmartClassRoom.Web.Models.ViewModels.Common.PaginationViewModel)
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-collection"></i>
+                <h3>No Sections Found</h3>
+                <p>There are no sections matching your criteria.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add First Section
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Cascading dropdown: Department -> Levels
+        document.getElementById('departmentId').addEventListener('change', function() {
+            const departmentId = this.value;
+            const levelSelect = document.getElementById('levelId');
+
+            // Clear current options
+            levelSelect.innerHTML = '<option value="">All Levels</option>';
+
+            if (departmentId) {
+                // Fetch levels for selected department
+                fetch(`/Admin/Sections/GetLevelsByDepartment?departmentId=${departmentId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(level => {
+                            const option = document.createElement('option');
+                            option.value = level.id;
+                            option.textContent = level.name;
+                            levelSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error loading levels:', error));
+            }
+        });
+    </script>
+}

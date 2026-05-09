@@ -1,0 +1,218 @@
+@model SmartClassRoom.Web.Models.ViewModels.Quizzes.AssignQuizRequest
+@{
+    ViewData["Title"] = "Assign Quiz";
+    ViewData["PageTitle"] = "Assign Quiz";
+    ViewData["PageIcon"] = "calendar-check";
+    ViewData["PageDescription"] = "Assign quiz to a course offering";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+    var quiz = ViewBag.Quiz as SmartClassRoom.Web.Models.Entities.Quizzes.Quiz;
+}
+
+@section PageActions {
+    <a asp-area="Admin" asp-controller="Quizzes" asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Quiz Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-md-3"><strong>Title:</strong></div>
+                    <div class="col-md-9">@quiz?.Title</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3"><strong>Course:</strong></div>
+                    <div class="col-md-9">@quiz?.Course?.Name</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3"><strong>Questions:</strong></div>
+                    <div class="col-md-9">@quiz?.Questions?.Count</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3"><strong>Time Limit:</strong></div>
+                    <div class="col-md-9">@quiz?.TimeLimit minutes</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-3"><strong>Passing Score:</strong></div>
+                    <div class="col-md-9">@quiz?.PassingScore%</div>
+                </div>
+                @if (quiz?.MaxAttempts.HasValue == true)
+                {
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>Max Attempts:</strong></div>
+                        <div class="col-md-9">@quiz.MaxAttempts</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Explanatory alert *@
+        <div class="alert alert-info mb-3" role="alert">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Why select a Course Offering?</strong>
+            <p class="mb-0 mt-1">
+                This quiz is for the course "<strong>@quiz?.Course?.Name</strong>", but you need to specify:
+            </p>
+            <ul class="mb-0">
+                <li><strong>Which term</strong> (e.g., Fall 2025, Spring 2026)</li>
+                <li><strong>Which section</strong> (e.g., Section A, Section B)</li>
+                <li><strong>Availability dates</strong> for students in that section</li>
+            </ul>
+            <p class="mb-0 mt-1 text-muted small">
+                <em>Tip: You can assign the same quiz to multiple offerings with different dates.</em>
+            </p>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-calendar-check me-2"></i>Assignment Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Assign" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="QuizId" value="@quiz?.Id" />
+
+                    <div class="mb-3">
+                        <label asp-for="CourseOfferingId" class="form-label">
+                            Select Term & Section
+                            <span class="text-muted">(for @quiz?.Course?.Name)</span>
+                        </label>
+                        @if (ViewBag.HasCourseOfferings == false || ViewBag.CourseOfferings == null)
+                        {
+                            <div class="alert alert-warning" role="alert">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <strong>No course offerings available!</strong>
+                                <p class="mb-2 mt-2">
+                                    There are no active course offerings for "<strong>@quiz?.Course?.Name</strong>".
+                                </p>
+                                <p class="mb-0">
+                                    Please create a course offering first:
+                                    <a asp-area="Admin" asp-controller="CourseOfferings" asp-action="Create" class="btn btn-sm btn-primary ms-2">
+                                        <i class="bi bi-plus-circle me-1"></i>Create Course Offering
+                                    </a>
+                                </p>
+                            </div>
+                            <select asp-for="CourseOfferingId" class="form-select" disabled>
+                                <option value="">No offerings available</option>
+                            </select>
+                        }
+                        else
+                        {
+                            <select asp-for="CourseOfferingId" asp-items="ViewBag.CourseOfferings" class="form-select">
+                                <option value="">Select Term & Section</option>
+                            </select>
+                        }
+                        <span asp-validation-for="CourseOfferingId" class="text-danger"></span>
+                        <div class="form-text">Select the term and section to assign this quiz to</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AvailableFrom" class="form-label">Available From</label>
+                            <input asp-for="AvailableFrom" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="AvailableFrom" class="text-danger"></span>
+                            <div class="form-text">When students can start taking the quiz</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AvailableUntil" class="form-label">Available Until</label>
+                            <input asp-for="AvailableUntil" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="AvailableUntil" class="text-danger"></span>
+                            <div class="form-text">Quiz deadline</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note:</strong> Students will only be able to access this quiz during the specified time period.
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-1"></i> Assign Quiz
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary btn-lg ms-2">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card sticky-top" style="top: 20px;">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>Assignment Tips
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="small text-muted mb-0">
+                    <li class="mb-2">Ensure the availability period gives students enough time to complete the quiz</li>
+                    <li class="mb-2">Consider time zones when setting availability dates</li>
+                    <li class="mb-2">The quiz will automatically become unavailable after the "Available Until" date</li>
+                    <li class="mb-2">Students can only attempt the quiz during the availability period</li>
+                    <li>You can assign the same quiz to multiple course offerings</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(document).ready(function() {
+            // Set default dates
+            const now = new Date();
+            const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+            // Format to datetime-local format (YYYY-MM-DDTHH:MM)
+            const formatDateTime = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            };
+
+            // Set default values if empty
+            if (!$('#AvailableFrom').val()) {
+                $('#AvailableFrom').val(formatDateTime(now));
+            }
+            if (!$('#AvailableUntil').val()) {
+                $('#AvailableUntil').val(formatDateTime(nextWeek));
+            }
+
+            // Validate dates on form submit
+            $('form').on('submit', function(e) {
+                const availableFrom = new Date($('#AvailableFrom').val());
+                const availableUntil = new Date($('#AvailableUntil').val());
+
+                if (availableFrom >= availableUntil) {
+                    e.preventDefault();
+                    alert('The "Available Until" date must be after the "Available From" date.');
+                    return false;
+                }
+
+                if (availableUntil <= now) {
+                    e.preventDefault();
+                    alert('The "Available Until" date must be in the future.');
+                    return false;
+                }
+            });
+        });
+    </script>
+}

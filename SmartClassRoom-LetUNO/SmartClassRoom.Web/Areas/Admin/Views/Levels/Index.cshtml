@@ -1,0 +1,160 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Level>
+
+@{
+    ViewData["Title"] = "Levels";
+    ViewData["PageTitle"] = "Levels";
+    ViewData["PageIcon"] = "layers";
+    ViewData["PageDescription"] = "Manage all academic levels in the system";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Level
+    </a>
+}
+
+<!-- Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="departmentId" class="form-label">Department</label>
+                <select name="departmentId" id="departmentId" class="form-select">
+                    <option value="">All Departments</option>
+                    @foreach (var department in ViewBag.Departments as SelectList)
+                    {
+                        <option value="@department.Value" selected="@(department.Value == ViewBag.SelectedDepartmentId?.ToString())">
+                            @department.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="isActive" class="form-label">Status</label>
+                <select name="isActive" id="isActive" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="true" selected="@(ViewBag.SelectedIsActive == true)">Active</option>
+                    <option value="false" selected="@(ViewBag.SelectedIsActive == false)">Inactive</option>
+                </select>
+            </div>
+
+            <div class="col-md-5 d-flex align-items-end justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Levels Table -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th asp-sortable-column="Name" asp-column-display="Level Name"></th>
+                            <th asp-sortable-column="LevelNumber" asp-column-display="Level Number"></th>
+                            <th asp-sortable-column="Department" asp-column-display="Department"></th>
+                            <th>Sections Count</th>
+                            <th>Students Count</th>
+                            <th asp-sortable-column="Status" asp-column-display="Status"></th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var level in Model)
+                        {
+                            <tr>
+                                <td><strong>@level.Name</strong></td>
+                                <td>
+                                    <span class="badge bg-primary">Level @level.LevelNumber</span>
+                                </td>
+                                <td>@level.Department.Name</td>
+                                <td>
+                                    <span class="badge bg-info" title="Sections">
+                                        @level.Sections.Count <i class="bi bi-collection"></i>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success" title="Students">
+                                        @level.Students.Count <i class="bi bi-people"></i>
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (level.IsActive)
+                                    {
+                                        <span class="status-badge active">
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge inactive">
+                                            <i class="bi bi-x-circle me-1"></i>Inactive
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a asp-action="Details" asp-route-id="@level.Id" class="action-btn info" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@level.Id" class="action-btn warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        @if (level.IsActive)
+                                        {
+                                            <form asp-action="Deactivate" asp-route-id="@level.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn danger" title="Deactivate"
+                                                        onclick="return confirm('Are you sure you want to deactivate this level?')">
+                                                    <i class="bi bi-slash-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Activate" asp-route-id="@level.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn success" title="Activate"
+                                                        onclick="return confirm('Are you sure you want to activate this level?')">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.Pagination != null)
+            {
+                @await Html.PartialAsync("_Pagination", ViewBag.Pagination as SmartClassRoom.Web.Models.ViewModels.Common.PaginationViewModel)
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-layers"></i>
+                <h3>No Levels Found</h3>
+                <p>There are no levels matching your criteria.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add First Level
+                </a>
+            </div>
+        }
+    </div>
+</div>

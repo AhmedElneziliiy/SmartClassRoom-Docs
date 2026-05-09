@@ -1,0 +1,166 @@
+@model SmartClassRoom.Web.Models.ViewModels.Groups.CreateGroupRequest
+
+@{
+    ViewData["Title"] = "Create Group";
+    ViewData["PageTitle"] = "Create Group";
+    ViewData["PageIcon"] = "people-fill";
+    ViewData["PageDescription"] = "Add a new group to the system";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="card form-card">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-info-circle"></i> Basic Information
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" placeholder="Enter group name (e.g., Group A)" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Code" class="form-label"></label>
+                        <input asp-for="Code" class="form-control" placeholder="Enter group code (optional, e.g., A)" />
+                        <span asp-validation-for="Code" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Capacity" class="form-label"></label>
+                        <input asp-for="Capacity" class="form-control" type="number" min="1" max="1000" placeholder="Enter maximum capacity (optional)" />
+                        <span asp-validation-for="Capacity" class="text-danger"></span>
+                        <small class="form-text text-muted">Leave empty for unlimited capacity</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Assignment Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-collection"></i> Section Assignment
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="DepartmentSelect" class="form-label">Department</label>
+                        <select id="DepartmentSelect" class="form-select">
+                            <option value="">-- Select Department First --</option>
+                            @foreach (var department in ViewBag.Departments as SelectList)
+                            {
+                                <option value="@department.Value">@department.Text</option>
+                            }
+                        </select>
+                        <small class="form-text text-muted">Select department to load levels</small>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="LevelSelect" class="form-label">Level</label>
+                        <select id="LevelSelect" class="form-select">
+                            <option value="">-- Select Department First --</option>
+                        </select>
+                        <small class="form-text text-muted">Select level to load sections</small>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="SectionId" class="form-label"></label>
+                        <select asp-for="SectionId" class="form-select" id="SectionSelect">
+                            <option value="">-- Select Level First --</option>
+                        </select>
+                        <span asp-validation-for="SectionId" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-check-circle"></i> Status
+                </h5>
+
+                <div class="form-check form-switch">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Create Group
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Cascading dropdowns: Department -> Level -> Section
+        document.getElementById('DepartmentSelect').addEventListener('change', function() {
+            const departmentId = this.value;
+            const levelSelect = document.getElementById('LevelSelect');
+            const sectionSelect = document.getElementById('SectionSelect');
+
+            // Clear current options
+            levelSelect.innerHTML = '<option value="">-- Select Level --</option>';
+            sectionSelect.innerHTML = '<option value="">-- Select Level First --</option>';
+
+            if (departmentId) {
+                // Fetch levels for selected department
+                fetch(`/Admin/Groups/GetLevelsByDepartment?departmentId=${departmentId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(level => {
+                            const option = document.createElement('option');
+                            option.value = level.id;
+                            option.textContent = level.name;
+                            levelSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error loading levels:', error));
+            }
+        });
+
+        document.getElementById('LevelSelect').addEventListener('change', function() {
+            const levelId = this.value;
+            const sectionSelect = document.getElementById('SectionSelect');
+
+            // Clear current options
+            sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+
+            if (levelId) {
+                // Fetch sections for selected level
+                fetch(`/Admin/Groups/GetSectionsByLevel?levelId=${levelId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(section => {
+                            const option = document.createElement('option');
+                            option.value = section.id;
+                            option.textContent = section.name;
+                            sectionSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error loading sections:', error));
+            }
+        });
+    </script>
+}

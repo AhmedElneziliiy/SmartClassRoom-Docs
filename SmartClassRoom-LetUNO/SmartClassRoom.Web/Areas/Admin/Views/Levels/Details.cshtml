@@ -1,0 +1,336 @@
+@model SmartClassRoom.Web.Models.Entities.Academic.Level
+
+@{
+    ViewData["Title"] = "Level Details";
+    ViewData["PageTitle"] = Model.Name;
+    ViewData["PageIcon"] = "layers";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+    var statistics = ViewBag.Statistics as SmartClassRoom.Web.Services.Interfaces.LevelStatistics;
+}
+
+@section PageActions {
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+        <i class="bi bi-pencil"></i> Edit
+    </a>
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="row g-4">
+    <!-- Left Column: Level Info -->
+    <div class="col-lg-4">
+        <div class="card detail-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle"></i> Level Information
+                </h5>
+
+                <div class="detail-group">
+                    <label>Name</label>
+                    <p><strong>@Model.Name</strong></p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Level Number</label>
+                    <p><span class="badge bg-primary">Level @Model.LevelNumber</span></p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Department</label>
+                    <p>
+                        <i class="bi bi-diagram-3"></i>
+                        <a asp-area="Admin" asp-controller="Departments" asp-action="Details" asp-route-id="@Model.DepartmentId">
+                            @Model.Department.Name
+                        </a>
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>University</label>
+                    <p>
+                        <i class="bi bi-building"></i>
+                        @Model.Department.University.Name
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Status</label>
+                    <p>
+                        @if (Model.IsActive)
+                        {
+                            <span class="status-badge active">
+                                <i class="bi bi-check-circle me-1"></i>Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="status-badge inactive">
+                                <i class="bi bi-x-circle me-1"></i>Inactive
+                            </span>
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div class="card detail-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-gear"></i> Actions
+                </h5>
+
+                <div class="detail-actions">
+                    @if (Model.IsActive)
+                    {
+                        <form asp-action="Deactivate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-warning btn-sm w-100"
+                                    onclick="return confirm('Are you sure you want to deactivate this level? Make sure there are no active sections or students.')">
+                                <i class="bi bi-slash-circle"></i> Deactivate Level
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Activate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-success btn-sm w-100"
+                                    onclick="return confirm('Are you sure you want to activate this level?')">
+                                <i class="bi bi-check-circle"></i> Activate Level
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Statistics and Related Data -->
+    <div class="col-lg-8">
+        <!-- Statistics Card -->
+        @if (statistics != null)
+        {
+            <div class="card stats-card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-graph-up"></i> Statistics
+                    </h5>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-info">
+                                    <i class="bi bi-collection"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Total Sections</span>
+                                    <span class="stat-value">@statistics.SectionsCount</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-primary">
+                                    <i class="bi bi-collection-fill"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Active Sections</span>
+                                    <span class="stat-value">@statistics.ActiveSectionsCount</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-success">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Total Students</span>
+                                    <span class="stat-value">@statistics.StudentsCount</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-warning">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Active Students</span>
+                                    <span class="stat-value">@statistics.ActiveStudentsCount</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Recent Sections Card -->
+        <div class="card data-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-collection"></i> Sections
+                </h5>
+
+                @if (Model.Sections.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Section Name</th>
+                                    <th>Code</th>
+                                    <th>Students</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var sec in Model.Sections.OrderByDescending(s => s.IsActive).Take(10))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-area="Admin" asp-controller="Sections" asp-action="Details" asp-route-id="@sec.Id">
+                                                @sec.Name
+                                            </a>
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(sec.Code))
+                                            {
+                                                <span class="badge bg-secondary">@sec.Code</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">N/A</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">@sec.Students.Count</span>
+                                        </td>
+                                        <td>
+                                            @if (sec.IsActive)
+                                            {
+                                                <span class="status-badge active">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge inactive">Inactive</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.Sections.Count > 10)
+                    {
+                        <div class="text-center mt-3">
+                            <a asp-area="Admin" asp-controller="Sections" asp-action="Index" asp-route-levelId="@Model.Id" class="btn btn-sm btn-outline-primary">
+                                View All Sections (@Model.Sections.Count)
+                            </a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state-small">
+                        <i class="bi bi-collection"></i>
+                        <p>No sections found for this level.</p>
+                        <a asp-area="Admin" asp-controller="Sections" asp-action="Create" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add Section
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Recent Students Card -->
+        <div class="card data-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-people"></i> Students
+                </h5>
+
+                @if (Model.Students.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Code</th>
+                                    <th>Section</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var student in Model.Students.OrderByDescending(s => s.IsActive).Take(10))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@student.Id">
+                                                @student.FullName
+                                            </a>
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(student.StudentCode))
+                                            {
+                                                <span class="badge bg-secondary">@student.StudentCode</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">N/A</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (student.Section != null)
+                                            {
+                                                <span>@student.Section.Name</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Not Assigned</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (student.IsActive)
+                                            {
+                                                <span class="status-badge active">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge inactive">Inactive</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.Students.Count > 10)
+                    {
+                        <div class="text-center mt-3">
+                            <a asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-levelId="@Model.Id" class="btn btn-sm btn-outline-primary">
+                                View All Students (@Model.Students.Count)
+                            </a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state-small">
+                        <i class="bi bi-people"></i>
+                        <p>No students found for this level.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

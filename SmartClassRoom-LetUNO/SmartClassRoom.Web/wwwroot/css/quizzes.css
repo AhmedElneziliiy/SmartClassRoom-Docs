@@ -1,0 +1,90 @@
+/**
+ * Quizzes CSS Styles
+ * Styles for the quizzes management page
+ */
+
+/* Quiz Title Cell */
+.quiz-title-cell {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.quiz-title-cell i {
+    font-size: 1.25rem;
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+}
+
+.quiz-row {
+    transition: all 0.2s ease;
+}
+
+.quiz-row:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Passing Score Badge */
+.passing-score {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Quiz Stats List */
+.quiz-stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    background: #e9ecef;
+    border-left-color: #667eea;
+    transform: translateX(4px);
+}
+
+.stat-item-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.stat-item-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .quiz-title-cell {
+        flex-direction: column;
+    }
+
+    .stat-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .stat-item-value {
+        font-size: 1.25rem;
+    }
+}

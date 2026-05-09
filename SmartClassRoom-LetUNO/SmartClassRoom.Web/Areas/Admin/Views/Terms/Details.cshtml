@@ -1,0 +1,266 @@
+@model SmartClassRoom.Web.Models.Entities.Academic.Term
+
+@{
+    ViewData["Title"] = "Term Details";
+    ViewData["PageTitle"] = Model.Name;
+    ViewData["PageIcon"] = "calendar3";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+    var statistics = ViewBag.Statistics as SmartClassRoom.Web.Services.Interfaces.TermStatistics;
+}
+
+@section PageActions {
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+        <i class="bi bi-pencil"></i> Edit
+    </a>
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="row g-4">
+    <!-- Left Column: Term Info -->
+    <div class="col-lg-4">
+        <div class="card detail-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle"></i> Term Information
+                </h5>
+
+                <div class="detail-group">
+                    <label>Name</label>
+                    <p><strong>@Model.Name</strong></p>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Code))
+                {
+                    <div class="detail-group">
+                        <label>Code</label>
+                        <p><span class="badge bg-secondary">@Model.Code</span></p>
+                    </div>
+                }
+
+                <div class="detail-group">
+                    <label>Start Date</label>
+                    <p><i class="bi bi-calendar-event"></i> @Model.StartDate.ToString("MMMM dd, yyyy")</p>
+                </div>
+
+                <div class="detail-group">
+                    <label>End Date</label>
+                    <p><i class="bi bi-calendar-event"></i> @Model.EndDate.ToString("MMMM dd, yyyy")</p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Duration</label>
+                    <p>@((Model.EndDate - Model.StartDate).Days) days</p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Status</label>
+                    <p>
+                        @if (Model.Status == "Active")
+                        {
+                            <span class="badge bg-success">@Model.Status</span>
+                        }
+                        else if (Model.Status == "Upcoming")
+                        {
+                            <span class="badge bg-info">@Model.Status</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">@Model.Status</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="detail-group">
+                    <label>Active</label>
+                    <p>
+                        @if (Model.IsActive)
+                        {
+                            <span class="status-badge active">
+                                <i class="bi bi-check-circle me-1"></i>Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="status-badge inactive">
+                                <i class="bi bi-x-circle me-1"></i>Inactive
+                            </span>
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Card -->
+        <div class="card detail-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-gear"></i> Actions
+                </h5>
+
+                <div class="detail-actions">
+                    @if (Model.IsActive)
+                    {
+                        <form asp-action="Deactivate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-warning btn-sm w-100"
+                                    onclick="return confirm('Are you sure you want to deactivate this term?')">
+                                <i class="bi bi-slash-circle"></i> Deactivate Term
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Activate" asp-route-id="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-success btn-sm w-100"
+                                    onclick="return confirm('Are you sure you want to activate this term?')">
+                                <i class="bi bi-check-circle"></i> Activate Term
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Statistics and Course Offerings -->
+    <div class="col-lg-8">
+        <!-- Statistics Card -->
+        @if (statistics != null)
+        {
+            <div class="card stats-card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-graph-up"></i> Statistics
+                    </h5>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-primary">
+                                    <i class="bi bi-journal-text"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Total Offerings</span>
+                                    <span class="stat-value">@statistics.OfferingsCount</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-info">
+                                    <i class="bi bi-journal-check"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Active Offerings</span>
+                                    <span class="stat-value">@statistics.ActiveOfferingsCount</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-success">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Total Enrollments</span>
+                                    <span class="stat-value">@statistics.EnrolledStudentsCount</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-warning">
+                                    <i class="bi bi-person-check"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <span class="stat-label">Active Enrollments</span>
+                                    <span class="stat-value">@statistics.ActiveEnrollmentsCount</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Course Offerings Card -->
+        <div class="card data-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-journal-text"></i> Course Offerings
+                </h5>
+
+                @if (Model.CourseOfferings.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Teacher</th>
+                                    <th>Students</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var offering in Model.CourseOfferings.OrderByDescending(o => o.Status == "Active").Take(10))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-area="Admin" asp-controller="CourseOfferings" asp-action="Details" asp-route-id="@offering.Id">
+                                                @offering.Course.Name (@offering.Course.Code)
+                                            </a>
+                                        </td>
+                                        <td>@offering.Teacher.FullName</td>
+                                        <td>
+                                            <span class="badge bg-success">@offering.Enrollments.Count / @offering.MaxStudents</span>
+                                        </td>
+                                        <td>
+                                            @if (offering.Status == "Active")
+                                            {
+                                                <span class="status-badge active">Active</span>
+                                            }
+                                            else if (offering.Status == "Completed")
+                                            {
+                                                <span class="badge bg-secondary">Completed</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">Cancelled</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.CourseOfferings.Count > 10)
+                    {
+                        <div class="text-center mt-3">
+                            <a asp-area="Admin" asp-controller="CourseOfferings" asp-action="Index" asp-route-termId="@Model.Id" class="btn btn-sm btn-outline-primary">
+                                View All Offerings (@Model.CourseOfferings.Count)
+                            </a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state-small">
+                        <i class="bi bi-journal-text"></i>
+                        <p>No course offerings found for this term.</p>
+                        <a asp-area="Admin" asp-controller="CourseOfferings" asp-action="Create" asp-route-termId="@Model.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add Offering
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

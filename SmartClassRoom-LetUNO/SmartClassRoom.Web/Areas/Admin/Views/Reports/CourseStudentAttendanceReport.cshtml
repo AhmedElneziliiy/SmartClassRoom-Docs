@@ -1,0 +1,143 @@
+@{
+    var offerings = ViewBag.CourseOfferings as IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.CourseOffering>;
+
+    ViewData["Title"] = "Course Student Attendance Report";
+    ViewData["PageTitle"] = "Course Student Attendance Report";
+    ViewData["PageDescription"] = "Detailed session-by-session attendance for all students in a course";
+    ViewData["PageIcon"] = "book";
+}
+
+<div class="card">
+    <div class="card-header bg-blue text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-book me-2"></i>
+            Generate Course Student Attendance Report
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            This report shows detailed attendance for all students enrolled in a course, including session-by-session breakdown and late arrival statistics.
+        </div>
+
+        <form method="get" asp-action="GenerateCourseStudentAttendancePdf" id="reportForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Select Course Offering <span class="text-danger">*</span></label>
+                    <select name="courseOfferingId" id="courseSelect" class="form-select" required>
+                        <option value="">-- Select a Course Offering --</option>
+                        @if (offerings != null)
+                        {
+                            var groupedByTerm = offerings.GroupBy(o => o.Term).OrderByDescending(g => g.Key.StartDate);
+                            @foreach (var termGroup in groupedByTerm)
+                            {
+                                <optgroup label="@termGroup.Key.Name">
+                                    @foreach (var offering in termGroup.OrderBy(o => o.Course.Code))
+                                    {
+                                        <option value="@offering.Id">
+                                            @offering.Course.Code - @offering.Course.Name (@offering.Teacher.FullName)
+                                        </option>
+                                    }
+                                </optgroup>
+                            }
+                        }
+                    </select>
+                    <small class="text-muted">Choose the course offering to generate the report for</small>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Start Date (Optional)</label>
+                    <input type="date" name="startDate" class="form-control" id="startDate" />
+                    <small class="text-muted">Leave blank for all sessions</small>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">End Date (Optional)</label>
+                    <input type="date" name="endDate" class="form-control" id="endDate" />
+                    <small class="text-muted">Leave blank for all sessions</small>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label fw-bold">Export Format</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-file-pdf me-2"></i>
+                            Download PDF
+                        </button>
+                        <button type="submit"
+                                formaction="@Url.Action("GenerateCourseStudentAttendanceExcel")"
+                                class="btn btn-success">
+                            <i class="bi bi-file-excel me-2"></i>
+                            Download Excel
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Back to Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="card-title">Report Contents</h6>
+        <p class="text-muted">The course student attendance report will include:</p>
+        <ul class="text-muted">
+            <li><strong>Course Information:</strong> Course code, name, teacher, and term</li>
+            <li><strong>Session List:</strong> All sessions with dates and times</li>
+            <li><strong>Student Breakdown:</strong> Every enrolled student with their attendance records</li>
+            <li><strong>Session-by-Session Grid:</strong> Visual matrix showing each student's status for each session</li>
+            <li><strong>Late Arrival Statistics:</strong> Number of late arrivals and average late minutes per student</li>
+            <li><strong>Overall Statistics:</strong> Total sessions, present/absent/late/excused counts, and attendance percentage</li>
+        </ul>
+        <div class="alert alert-warning mt-3">
+            <i class="bi bi-clock-history me-2"></i>
+            <strong>Late Arrivals:</strong> Students who check in after the session start time are marked as "Late" and the delay is calculated in minutes.
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .bg-blue {
+            background-color: #0d6efd !important;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .form-label {
+            margin-bottom: 0.5rem;
+        }
+
+        small.text-muted {
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .btn {
+            font-weight: 500;
+        }
+
+        .alert-info {
+            border-left: 4px solid #0dcaf0;
+        }
+
+        .alert-warning {
+            border-left: 4px solid #ffc107;
+        }
+
+        optgroup {
+            font-weight: bold;
+            color: #6c757d;
+        }
+
+        option {
+            font-weight: normal;
+        }
+    </style>
+}

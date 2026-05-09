@@ -1,0 +1,347 @@
+@model SmartClassRoom.Web.Models.ViewModels.Timetables.GenerateTimetableRequest
+@{
+    ViewData["Title"] = "Generate Timetable";
+    ViewData["PageTitle"] = "Generate Timetable";
+    ViewData["PageIcon"] = "lightning-charge";
+    ViewData["PageDescription"] = "Automatically generate a timetable for a section";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-area="Admin" asp-controller="Timetables" asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightning-charge me-2"></i>Automatic Timetable Generation
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>How it works:</strong> Select the department, level, section, term, and configure your schedule preferences below.
+                    The system will automatically generate a weekly timetable by assigning courses to available time slots and rooms while avoiding conflicts.
+                </div>
+
+                <form asp-area="Admin" asp-controller="Timetables" asp-action="Generate" method="post">
+                    @Html.AntiForgeryToken()
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <h5 class="alert-heading">
+                                <i class="bi bi-exclamation-triangle me-2"></i>Unable to Generate Timetable
+                            </h5>
+                            <div asp-validation-summary="ModelOnly"></div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label required">Timetable Name</label>
+                        <input asp-for="Name" class="form-control" placeholder="e.g., CS Level 1 Section A Fall 2024" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DepartmentId" class="form-label required">Department</label>
+                            <select asp-for="DepartmentId" asp-items="ViewBag.Departments" class="form-select">
+                                <option value="">Select Department</option>
+                            </select>
+                            <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="TermId" class="form-label required">Term</label>
+                            <select asp-for="TermId" asp-items="ViewBag.Terms" class="form-select">
+                                <option value="">Select Term</option>
+                            </select>
+                            <span asp-validation-for="TermId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="LevelId" class="form-label required">Level</label>
+                            <select asp-for="LevelId" asp-items="ViewBag.Levels" class="form-select">
+                                <option value="">Select Level</option>
+                            </select>
+                            <span asp-validation-for="LevelId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="SectionId" class="form-label required">Section</label>
+                            <select asp-for="SectionId" asp-items="ViewBag.Sections" class="form-select">
+                                <option value="">Select Section</option>
+                            </select>
+                            <span asp-validation-for="SectionId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+                    <h6 class="text-primary mb-3"><i class="bi bi-gear me-2"></i>Schedule Configuration</h6>
+
+                    <!-- Working Days Selection -->
+                    <div class="mb-3">
+                        <label class="form-label required">Working Days</label>
+                        <div class="border rounded p-3">
+                            @foreach (var day in new[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" })
+                            {
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input day-checkbox" type="checkbox" name="SelectedDays"
+                                           value="@day" id="day@day">
+                                    <label class="form-check-label" for="day@day">@day</label>
+                                </div>
+                            }
+                        </div>
+                        <small class="form-text text-muted">Select at least one working day</small>
+                        <span asp-validation-for="SelectedDays" class="text-danger"></span>
+                    </div>
+
+                    <!-- Time Range -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="StartTime" class="form-label required">Start Time</label>
+                            <input asp-for="StartTime" type="text" class="form-control time-input" id="startTimeInput" placeholder="Select time" />
+                            <small class="form-text text-muted">Click to select time</small>
+                            <span asp-validation-for="StartTime" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EndTime" class="form-label required">End Time</label>
+                            <input asp-for="EndTime" type="text" class="form-control time-input" id="endTimeInput" placeholder="Select time" />
+                            <small class="form-text text-muted">Click to select time</small>
+                            <span asp-validation-for="EndTime" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Slot Duration - Fixed at 60 minutes -->
+                    <div class="mb-3">
+                        <label class="form-label">Slot Duration</label>
+                        <input type="text" class="form-control" value="60 minutes" readonly disabled />
+                        <input type="hidden" asp-for="SlotDurationMinutes" value="60" id="slotDurationInput" />
+                        <small class="form-text text-muted">Fixed at 60 minutes per time slot</small>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-lightning-charge me-2"></i>Generate Timetable
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Generation Info
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6 class="text-primary">Configuration Summary</h6>
+                <ul class="small mb-3" id="config-summary">
+                    <li><strong>Days:</strong> <span id="summary-days">None selected</span></li>
+                    <li><strong>Hours:</strong> <span id="summary-hours">Not set</span></li>
+                    <li><strong>Slot Duration:</strong> <span id="summary-duration">50 minutes</span></li>
+                    <li><strong>Capacity:</strong> <span id="summary-total">Not configured</span></li>
+                </ul>
+                <div class="alert alert-info small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>Note:</strong> Total sessions needed is calculated from course offerings.
+                    Sessions will be distributed evenly across selected working days.
+                </div>
+
+                <h6 class="text-primary">Conflict Detection</h6>
+                <ul class="small mb-3">
+                    <li>Teacher double-booking</li>
+                    <li>Section conflicts</li>
+                    <li>Room availability</li>
+                </ul>
+
+                <h6 class="text-primary">Algorithm</h6>
+                <p class="small text-muted">
+                    Courses with higher sessions per week are scheduled first to ensure optimal slot allocation.
+                    The system automatically finds suitable rooms based on capacity and type.
+                </p>
+
+                <div class="alert alert-warning small mt-3">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    If conflicts are detected, the timetable will be saved as <strong>Draft</strong>.
+                    You can manually edit it before publishing.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(document).ready(function() {
+            // Initialize Flatpickr for time inputs
+            flatpickr('#startTimeInput', {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "h:i K",  // 12-hour format with AM/PM
+                time_24hr: false,
+                defaultHour: 8,
+                defaultMinute: 0,
+                onChange: function(selectedDates, dateStr, instance) {
+                    updateSummary();
+                }
+            });
+
+            flatpickr('#endTimeInput', {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "h:i K",  // 12-hour format with AM/PM
+                time_24hr: false,
+                defaultHour: 17,
+                defaultMinute: 0,
+                onChange: function(selectedDates, dateStr, instance) {
+                    updateSummary();
+                }
+            });
+
+            // Function to parse 12-hour time to TimeSpan format (HH:mm:ss)
+            function parse12HourTime(timeStr) {
+                try {
+                    // Match format like "8:00 AM" or "5:30 PM"
+                    const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+                    if (!match) return null;
+
+                    let hours = parseInt(match[1]);
+                    const minutes = parseInt(match[2]);
+                    const period = match[3].toUpperCase();
+
+                    // Convert to 24-hour format
+                    if (period === 'PM' && hours !== 12) {
+                        hours += 12;
+                    } else if (period === 'AM' && hours === 12) {
+                        hours = 0;
+                    }
+
+                    // Return in TimeSpan format (HH:mm:ss)
+                    return hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0') + ':00';
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            // Function to update configuration summary
+            function updateSummary() {
+                // Update selected days
+                const selectedDays = [];
+                $('.day-checkbox:checked').each(function() {
+                    selectedDays.push($(this).val());
+                });
+                $('#summary-days').text(selectedDays.length > 0 ? selectedDays.join(', ') : 'None selected');
+
+                // Update time range
+                const startTime = $('#startTimeInput').val();
+                const endTime = $('#endTimeInput').val();
+                if (startTime && endTime) {
+                    $('#summary-hours').text(startTime + ' - ' + endTime);
+                } else {
+                    $('#summary-hours').text('Not set');
+                }
+
+                // Update duration - Fixed at 60 minutes
+                const duration = 60;  // Hardcoded to 60 minutes
+                $('#summary-duration').text('60 minutes');
+
+                // Calculate slots per day (for reference only - actual validation is done server-side)
+                if (selectedDays.length > 0 && startTime && endTime) {
+                    const start = parse12HourTime(startTime);
+                    const end = parse12HourTime(endTime);
+
+                    if (start && end) {
+                        const startHours = parseInt(start.split(':')[0]);
+                        const startMinutes = parseInt(start.split(':')[1]);
+                        const endHours = parseInt(end.split(':')[0]);
+                        const endMinutes = parseInt(end.split(':')[1]);
+
+                        const totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+                        const slotsPerDay = Math.floor(totalMinutes / duration);  // Using hardcoded 60
+
+                        // Show slots per day, not total (total depends on actual sessions needed)
+                        const minSlotsNeeded = Math.ceil(30 / selectedDays.length); // Assume ~30 sessions as average
+
+                        if (slotsPerDay < 2) {
+                            $('#summary-total').html(`<span class="text-danger">${slotsPerDay} slots/day × ${selectedDays.length} days ⚠️ Too few</span>`);
+                        } else if (slotsPerDay < minSlotsNeeded) {
+                            $('#summary-total').html(`<span class="text-warning">${slotsPerDay} slots/day × ${selectedDays.length} days ⚠️ May be insufficient</span>`);
+                        } else {
+                            $('#summary-total').html(`${slotsPerDay} slots/day × ${selectedDays.length} days <span class="text-success">✓</span>`);
+                        }
+                    }
+                } else {
+                    $('#summary-total').text('Not configured');
+                }
+            }
+
+            // Convert 12-hour time input to hidden TimeSpan format on form submit
+            $('form').on('submit', function(e) {
+                const startTime = $('#startTimeInput').val();
+                const endTime = $('#endTimeInput').val();
+
+                const startTimeSpan = parse12HourTime(startTime);
+                const endTimeSpan = parse12HourTime(endTime);
+
+                if (!startTimeSpan) {
+                    e.preventDefault();
+                    alert('Please enter a valid start time (e.g., 8:00 AM)');
+                    return false;
+                }
+
+                if (!endTimeSpan) {
+                    e.preventDefault();
+                    alert('Please enter a valid end time (e.g., 5:00 PM)');
+                    return false;
+                }
+
+                // Check if configuration provides enough slots
+                const selectedDays = $('.day-checkbox:checked').length;
+                const duration = parseInt($('#slotDurationInput').val());
+
+                if (selectedDays > 0 && startTimeSpan && endTimeSpan && duration) {
+                    const startMinutes = parseInt(startTimeSpan.split(':')[0]) * 60 + parseInt(startTimeSpan.split(':')[1]);
+                    const endMinutes = parseInt(endTimeSpan.split(':')[0]) * 60 + parseInt(endTimeSpan.split(':')[1]);
+                    const totalMinutes = endMinutes - startMinutes;
+                    const slotsPerDay = Math.floor(totalMinutes / duration);
+                    const totalSlots = slotsPerDay * selectedDays;
+
+                    // Warn if slots seem insufficient
+                    if (totalSlots < 10) {
+                        if (!confirm(`⚠️ Configuration only provides ${totalSlots} total slots per week.\n\nThis may not be enough for your courses.\n\nContinue anyway?`)) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+                }
+
+                // Update the model fields with TimeSpan values
+                $('#startTimeInput').val(startTimeSpan);
+                $('#endTimeInput').val(endTimeSpan);
+
+                return true;
+            });
+
+            // Attach event listeners
+            $('.day-checkbox').on('change', updateSummary);
+            $('#startTimeInput, #endTimeInput, #slotDurationInput').on('input', updateSummary);
+
+            // Initial summary update
+            updateSummary();
+        });
+    </script>
+}

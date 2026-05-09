@@ -1,0 +1,253 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Group>
+
+@{
+    ViewData["Title"] = "Groups";
+    ViewData["PageTitle"] = "Groups";
+    ViewData["PageIcon"] = "people-fill";
+    ViewData["PageDescription"] = "Manage all groups in the system";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Group
+    </a>
+}
+
+<!-- Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3" id="filterForm">
+            <div class="col-md-3">
+                <label for="departmentId" class="form-label">Department</label>
+                <select name="departmentId" id="departmentId" class="form-select">
+                    <option value="">All Departments</option>
+                    @foreach (var department in ViewBag.Departments as SelectList)
+                    {
+                        <option value="@department.Value" selected="@(department.Value == ViewBag.SelectedDepartmentId?.ToString())">
+                            @department.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="levelId" class="form-label">Level</label>
+                <select name="levelId" id="levelId" class="form-select">
+                    <option value="">All Levels</option>
+                    @foreach (var level in ViewBag.Levels as SelectList)
+                    {
+                        <option value="@level.Value" selected="@(level.Value == ViewBag.SelectedLevelId?.ToString())">
+                            @level.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="sectionId" class="form-label">Section</label>
+                <select name="sectionId" id="sectionId" class="form-select">
+                    <option value="">All Sections</option>
+                    @foreach (var sec in ViewBag.Sections as SelectList)
+                    {
+                        <option value="@sec.Value" selected="@(sec.Value == ViewBag.SelectedSectionId?.ToString())">
+                            @sec.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="isActive" class="form-label">Status</label>
+                <select name="isActive" id="isActive" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="true" selected="@(ViewBag.SelectedIsActive == true)">Active</option>
+                    <option value="false" selected="@(ViewBag.SelectedIsActive == false)">Inactive</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Groups Table -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th asp-sortable-column="Name" asp-column-display="Group Name"></th>
+                            <th asp-sortable-column="Code" asp-column-display="Code"></th>
+                            <th asp-sortable-column="Section" asp-column-display="Section"></th>
+                            <th asp-sortable-column="Level" asp-column-display="Level"></th>
+                            <th>Department</th>
+                            <th asp-sortable-column="Capacity" asp-column-display="Capacity"></th>
+                            <th>Students</th>
+                            <th asp-sortable-column="Status" asp-column-display="Status"></th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var grp in Model)
+                        {
+                            <tr>
+                                <td><strong>@grp.Name</strong></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(grp.Code))
+                                    {
+                                        <span class="badge bg-secondary">@grp.Code</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+                                </td>
+                                <td>@grp.Section.Name</td>
+                                <td>@grp.Section.Level.Name</td>
+                                <td>@grp.Section.Level.Department.Name</td>
+                                <td>
+                                    @if (grp.Capacity.HasValue)
+                                    {
+                                        <span class="badge bg-info">@grp.Capacity <i class="bi bi-people"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No Limit</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">@grp.Students.Count <i class="bi bi-people"></i></span>
+                                </td>
+                                <td>
+                                    @if (grp.IsActive)
+                                    {
+                                        <span class="status-badge active">
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge inactive">
+                                            <i class="bi bi-x-circle me-1"></i>Inactive
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a asp-action="Details" asp-route-id="@grp.Id" class="action-btn info" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@grp.Id" class="action-btn warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        @if (grp.IsActive)
+                                        {
+                                            <form asp-action="Deactivate" asp-route-id="@grp.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn danger" title="Deactivate"
+                                                        onclick="return confirm('Are you sure you want to deactivate this group?')">
+                                                    <i class="bi bi-slash-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Activate" asp-route-id="@grp.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="action-btn success" title="Activate"
+                                                        onclick="return confirm('Are you sure you want to activate this group?')">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.Pagination != null)
+            {
+                @await Html.PartialAsync("_Pagination", ViewBag.Pagination as SmartClassRoom.Web.Models.ViewModels.Common.PaginationViewModel)
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-people-fill"></i>
+                <h3>No Groups Found</h3>
+                <p>There are no groups matching your criteria.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add First Group
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Cascading dropdowns: Department -> Levels -> Sections
+        document.getElementById('departmentId').addEventListener('change', function() {
+            const departmentId = this.value;
+            const levelSelect = document.getElementById('levelId');
+            const sectionSelect = document.getElementById('sectionId');
+
+            // Clear current options
+            levelSelect.innerHTML = '<option value="">All Levels</option>';
+            sectionSelect.innerHTML = '<option value="">All Sections</option>';
+
+            if (departmentId) {
+                // Fetch levels for selected department
+                fetch(`/Admin/Groups/GetLevelsByDepartment?departmentId=${departmentId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(level => {
+                            const option = document.createElement('option');
+                            option.value = level.id;
+                            option.textContent = level.name;
+                            levelSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error loading levels:', error));
+            }
+        });
+
+        document.getElementById('levelId').addEventListener('change', function() {
+            const levelId = this.value;
+            const sectionSelect = document.getElementById('sectionId');
+
+            // Clear current options
+            sectionSelect.innerHTML = '<option value="">All Sections</option>';
+
+            if (levelId) {
+                // Fetch sections for selected level
+                fetch(`/Admin/Groups/GetSectionsByLevel?levelId=${levelId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(section => {
+                            const option = document.createElement('option');
+                            option.value = section.id;
+                            option.textContent = section.name;
+                            sectionSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error loading sections:', error));
+            }
+        });
+    </script>
+}

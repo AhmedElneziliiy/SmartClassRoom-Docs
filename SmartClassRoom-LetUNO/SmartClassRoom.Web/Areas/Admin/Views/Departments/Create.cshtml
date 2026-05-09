@@ -1,0 +1,100 @@
+@model SmartClassRoom.Web.Models.ViewModels.Departments.CreateDepartmentRequest
+
+@{
+    ViewData["Title"] = "Create Department";
+    ViewData["PageTitle"] = "Create Department";
+    ViewData["PageIcon"] = "diagram-3";
+    ViewData["PageDescription"] = "Add a new department to the system";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="card form-card">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-info-circle"></i> Basic Information
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" placeholder="Enter department name" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Code" class="form-label"></label>
+                        <input asp-for="Code" class="form-control" placeholder="Enter department code (optional)" />
+                        <span asp-validation-for="Code" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter department description"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- University Selection Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-building"></i> University Assignment
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label asp-for="UniversityId" class="form-label"></label>
+                        <select asp-for="UniversityId" class="form-select" asp-items="ViewBag.Universities">
+                            <option value="">-- Select University --</option>
+                        </select>
+                        <span asp-validation-for="UniversityId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Note:</strong> Head of Department can be assigned after creating the department and adding teachers.
+                </div>
+            </div>
+
+            <!-- Status Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-check-circle"></i> Status
+                </h5>
+
+                <div class="form-check form-switch">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Create Department
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

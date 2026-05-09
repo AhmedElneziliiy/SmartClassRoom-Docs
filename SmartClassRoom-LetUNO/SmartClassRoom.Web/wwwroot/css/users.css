@@ -1,0 +1,340 @@
+/* ========================================
+   Users Table - Vision Valley Style
+   ======================================== */
+
+/* Filter Card */
+.filter-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: none;
+}
+
+.filter-form .form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 6px;
+}
+
+/* Users Table */
+.users-table {
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.users-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.users-table thead th {
+    padding: 18px 20px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+    color: #ffffff !important;
+    background: transparent !important;
+    border: none !important;
+    white-space: nowrap !important;
+}
+
+.users-table thead th:first-child {
+    border-radius: 12px 0 0 0;
+}
+
+.users-table thead th:last-child {
+    border-radius: 0 12px 0 0;
+}
+
+.users-table tbody tr {
+    border-bottom: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.users-table tbody tr:hover {
+    background: #f7fafc;
+}
+
+.users-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.users-table tbody td {
+    padding: 16px 20px;
+    font-size: 14px;
+    color: #4a5568;
+    border: none;
+    vertical-align: middle;
+}
+
+/* User Cell with Avatar */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar-sm {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.user-avatar-sm.student {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border-color: rgba(17, 153, 142, 0.2);
+}
+
+.user-avatar-sm.teacher {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border-color: rgba(79, 172, 254, 0.2);
+}
+
+.user-avatar-sm.admin {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-color: rgba(240, 147, 251, 0.2);
+}
+
+.user-info-sm {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-name-sm {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.user-username {
+    font-size: 12px;
+    color: #a0aec0;
+}
+
+/* Custom Badges */
+.badge-student {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-teacher {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-admin {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-badge.active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.inactive {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: #f7fafc;
+    color: #718096;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn.info {
+    background: rgba(79, 172, 254, 0.1);
+    color: #3b82f6;
+}
+
+.action-btn.info:hover {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.action-btn.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.action-btn.warning:hover {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.action-btn.secondary {
+    background: rgba(113, 128, 150, 0.1);
+    color: #718096;
+}
+
+.action-btn.secondary:hover {
+    background: #4a5568;
+    color: white;
+}
+
+.action-btn.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.action-btn.danger:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.action-btn.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.action-btn.success:hover {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 80px 40px;
+}
+
+.empty-state i {
+    font-size: 64px;
+    color: #cbd5e0;
+    margin-bottom: 20px;
+}
+
+.empty-state h4 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 12px;
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: #718096;
+    margin-bottom: 24px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .users-table {
+        font-size: 13px;
+    }
+
+    .users-table thead th,
+    .users-table tbody td {
+        padding: 12px 14px;
+    }
+
+    .user-avatar-sm {
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
+    }
+
+    .user-name-sm {
+        font-size: 13px;
+    }
+
+    .action-buttons {
+        gap: 4px;
+    }
+
+    .action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-form .row {
+        gap: 12px;
+    }
+
+    .empty-state {
+        padding: 60px 20px;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+    }
+}

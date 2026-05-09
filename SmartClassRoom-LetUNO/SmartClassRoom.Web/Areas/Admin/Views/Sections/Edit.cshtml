@@ -1,0 +1,137 @@
+@model SmartClassRoom.Web.Models.ViewModels.Sections.EditSectionRequest
+
+@{
+    ViewData["Title"] = "Edit Section";
+    ViewData["PageTitle"] = "Edit Section";
+    ViewData["PageIcon"] = "collection";
+    ViewData["PageDescription"] = "Update section information";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+}
+
+<div class="card form-card">
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="Id" type="hidden" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-info-circle"></i> Basic Information
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" placeholder="Enter section name (e.g., Section A)" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Code" class="form-label"></label>
+                        <input asp-for="Code" class="form-control" placeholder="Enter section code (optional, e.g., A)" />
+                        <span asp-validation-for="Code" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label asp-for="Capacity" class="form-label"></label>
+                        <input asp-for="Capacity" class="form-control" type="number" min="1" max="1000" placeholder="Enter maximum capacity (optional)" />
+                        <span asp-validation-for="Capacity" class="text-danger"></span>
+                        <small class="form-text text-muted">Leave empty for unlimited capacity</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Assignment Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-layers"></i> Level Assignment
+                </h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="DepartmentSelect" class="form-label">Department</label>
+                        <select id="DepartmentSelect" class="form-select">
+                            <option value="">-- Select Department First --</option>
+                            @foreach (var department in ViewBag.Departments as SelectList)
+                            {
+                                <option value="@department.Value">@department.Text</option>
+                            }
+                        </select>
+                        <small class="form-text text-muted">Select department to load levels</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="LevelId" class="form-label"></label>
+                        <select asp-for="LevelId" class="form-select" id="LevelSelect">
+                            @foreach (var level in ViewBag.Levels as SelectList)
+                            {
+                                <option value="@level.Value" selected="@(level.Value == Model.LevelId.ToString())">@level.Text</option>
+                            }
+                        </select>
+                        <span asp-validation-for="LevelId" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Section -->
+            <div class="form-section">
+                <h5 class="form-section-title">
+                    <i class="bi bi-check-circle"></i> Status
+                </h5>
+
+                <div class="form-check form-switch">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Update Section
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Cascading dropdown: Department -> Levels
+        document.getElementById('DepartmentSelect').addEventListener('change', function() {
+            const departmentId = this.value;
+            const levelSelect = document.getElementById('LevelSelect');
+
+            // Clear current options
+            levelSelect.innerHTML = '<option value="">-- Select Level --</option>';
+
+            if (departmentId) {
+                // Fetch levels for selected department
+                fetch(`/Admin/Sections/GetLevelsByDepartment?departmentId=${departmentId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(level => {
+                            const option = document.createElement('option');
+                            option.value = level.id;
+                            option.textContent = level.name;
+                            levelSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error loading levels:', error));
+            }
+        });
+    </script>
+}

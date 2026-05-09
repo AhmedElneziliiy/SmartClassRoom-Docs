@@ -1,0 +1,471 @@
+@model CourseOfferingMaterialsViewModel
+@using SmartClassRoom.Web.Services.Interfaces
+
+@{
+    ViewData["Title"] = $"Materials - {Model.CourseCode}";
+    ViewData["PageTitle"] = $"{Model.CourseCode} - {Model.CourseName}";
+    ViewData["PageIcon"] = "folder";
+    ViewData["PageDescription"] = $"Manage materials for {Model.CourseName}";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+
+    var allowedExtensions = ViewBag.AllowedExtensions as IEnumerable<string>;
+    var maxFileSizeMB = ViewBag.MaxFileSizeMB;
+}
+
+@section PageActions {
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadModal">
+        <i class="bi bi-cloud-upload"></i> Upload Files
+    </button>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createFolderModal">
+        <i class="bi bi-folder-plus"></i> New Folder
+    </button>
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Materials</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.CourseCode</li>
+    </ol>
+</nav>
+
+<!-- Course Info Card -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <small class="text-muted">Course</small>
+                <p class="mb-0"><strong>@Model.CourseCode</strong> - @Model.CourseName</p>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted">Teacher</small>
+                <p class="mb-0">@Model.TeacherName</p>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted">Term</small>
+                <p class="mb-0"><span class="badge bg-secondary">@Model.TermName</span></p>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted">Total Materials</small>
+                <p class="mb-0"><span class="badge bg-primary">@Model.TotalMaterials files</span></p>
+            </div>
+            <div class="col-md-2">
+                <small class="text-muted">Total Size</small>
+                <p class="mb-0"><span class="badge bg-info">@Model.FormattedTotalSize</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Folders Sidebar -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-folder me-2"></i>Folders</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="folderList">
+                    <a href="#" class="list-group-item list-group-item-action active folder-item" data-folder-id="">
+                        <i class="bi bi-folder me-2"></i> All Materials
+                        <span class="badge bg-secondary float-end">@Model.TotalMaterials</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action folder-item" data-folder-id="root">
+                        <i class="bi bi-folder me-2"></i> Root (No Folder)
+                        <span class="badge bg-secondary float-end">@Model.RootMaterials.Count</span>
+                    </a>
+                    @foreach (var folder in Model.Folders)
+                    {
+                        @await Html.PartialAsync("_FolderItem", folder)
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Materials List -->
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0" id="currentFolderName"><i class="bi bi-file-earmark me-2"></i>All Materials</h6>
+            </div>
+            <div class="card-body p-0">
+                <div id="materialsContainer">
+                    @if (Model.TotalMaterials > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="users-table" id="materialsTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px;"></th>
+                                        <th>Title</th>
+                                        <th>Folder</th>
+                                        <th>Size</th>
+                                        <th>Uploaded</th>
+                                        <th>Downloads</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="materialsTableBody">
+                                    @{
+                                        var allMaterials = Model.RootMaterials.ToList();
+                                        void AddFolderMaterials(List<MaterialFolderViewModel> folders)
+                                        {
+                                            foreach (var folder in folders)
+                                            {
+                                                allMaterials.AddRange(folder.Materials);
+                                                AddFolderMaterials(folder.SubFolders);
+                                            }
+                                        }
+                                        AddFolderMaterials(Model.Folders);
+                                    }
+
+                                    @foreach (var material in allMaterials.OrderByDescending(m => m.UploadedAt))
+                                    {
+                                        <tr data-folder-id="@(material.FolderId?.ToString() ?? "root")">
+                                            <td>
+                                                <i class="bi @material.FileTypeIcon fs-4 text-primary"></i>
+                                            </td>
+                                            <td>
+                                                <strong>@material.Title</strong>
+                                                @if (!string.IsNullOrEmpty(material.Description))
+                                                {
+                                                    <br />
+                                                    <small class="text-muted">@material.Description</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(material.FolderName))
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-folder me-1"></i>@material.FolderName
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@material.FormattedFileSize</span>
+                                            </td>
+                                            <td>
+                                                <small>@material.UploadedAt.ToString("MMM dd, yyyy")</small>
+                                                <br />
+                                                <small class="text-muted">by @material.UploadedByName</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-secondary">@material.DownloadCount</span>
+                                            </td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <a asp-action="Download" asp-route-id="@material.Id"
+                                                       class="action-btn info" title="Download">
+                                                        <i class="bi bi-download"></i>
+                                                    </a>
+                                                    <button type="button" class="action-btn warning move-btn"
+                                                            data-material-id="@material.Id"
+                                                            data-bs-toggle="modal" data-bs-target="#moveModal"
+                                                            title="Move to Folder">
+                                                        <i class="bi bi-arrow-right-square"></i>
+                                                    </button>
+                                                    <form asp-action="Delete" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@material.Id" />
+                                                        <input type="hidden" name="courseOfferingId" value="@Model.CourseOfferingId" />
+                                                        <button type="submit" class="action-btn danger" title="Delete"
+                                                                onclick="return confirm('Are you sure you want to delete this material?')">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state py-5">
+                            <i class="bi bi-cloud-upload"></i>
+                            <h3>No Materials Yet</h3>
+                            <p>Upload your first material to get started.</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                <i class="bi bi-cloud-upload"></i> Upload Files
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadModalLabel">
+                    <i class="bi bi-cloud-upload me-2"></i>Upload Materials
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="UploadMultiple" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="courseOfferingId" value="@Model.CourseOfferingId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="folderId" class="form-label">Upload to Folder (Optional)</label>
+                        <select name="folderId" id="uploadFolderId" class="form-select">
+                            <option value="">Root (No Folder)</option>
+                            @foreach (var folder in Model.Folders)
+                            {
+                                <option value="@folder.Id">@folder.Name</option>
+                                @foreach (var subFolder in folder.SubFolders)
+                                {
+                                    <option value="@subFolder.Id">&nbsp;&nbsp;&nbsp;@subFolder.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="files" class="form-label">Select Files</label>
+                        <div class="drop-zone" id="dropZone">
+                            <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+                            <p class="mb-2">Drag and drop files here or click to browse</p>
+                            <input type="file" name="files" id="files" class="form-control" multiple
+                                   accept="@string.Join(",", allowedExtensions.Select(e => "." + e))" />
+                        </div>
+                        <small class="text-muted">
+                            Allowed: @string.Join(", ", allowedExtensions.Select(e => "." + e.ToUpper())) |
+                            Max size: @maxFileSizeMB MB per file
+                        </small>
+                    </div>
+
+                    <div id="fileList" class="mb-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="uploadBtn">
+                        <i class="bi bi-cloud-upload"></i> Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Folder Modal -->
+<div class="modal fade" id="createFolderModal" tabindex="-1" aria-labelledby="createFolderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createFolderModalLabel">
+                    <i class="bi bi-folder-plus me-2"></i>Create Folder
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="CreateFolder" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="courseOfferingId" value="@Model.CourseOfferingId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="folderName" class="form-label">Folder Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="folderName" class="form-control" required
+                               placeholder="e.g., Lectures, Labs, Exams" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="parentFolderId" class="form-label">Parent Folder (Optional)</label>
+                        <select name="parentFolderId" id="parentFolderId" class="form-select">
+                            <option value="">Root Level</option>
+                            @foreach (var folder in Model.Folders)
+                            {
+                                <option value="@folder.Id">@folder.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-folder-plus"></i> Create Folder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Move Material Modal -->
+<div class="modal fade" id="moveModal" tabindex="-1" aria-labelledby="moveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="moveModalLabel">
+                    <i class="bi bi-arrow-right-square me-2"></i>Move to Folder
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="MoveToFolder" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="materialId" id="moveMaterialId" value="" />
+                <input type="hidden" name="courseOfferingId" value="@Model.CourseOfferingId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="moveFolderId" class="form-label">Select Destination Folder</label>
+                        <select name="folderId" id="moveFolderId" class="form-select">
+                            <option value="">Root (No Folder)</option>
+                            @foreach (var folder in Model.Folders)
+                            {
+                                <option value="@folder.Id">@folder.Name</option>
+                                @foreach (var subFolder in folder.SubFolders)
+                                {
+                                    <option value="@subFolder.Id">&nbsp;&nbsp;&nbsp;@subFolder.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-arrow-right-square"></i> Move
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .drop-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+
+        .drop-zone input[type="file"] {
+            display: none;
+        }
+
+        .folder-item {
+            cursor: pointer;
+        }
+
+        .folder-item.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .subfolder-item {
+            padding-left: 2rem !important;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Drop zone functionality
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('files');
+            const fileList = document.getElementById('fileList');
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                fileInput.files = e.dataTransfer.files;
+                updateFileList();
+            });
+
+            fileInput.addEventListener('change', updateFileList);
+
+            function updateFileList() {
+                fileList.innerHTML = '';
+                if (fileInput.files.length > 0) {
+                    const list = document.createElement('ul');
+                    list.className = 'list-group';
+                    for (let file of fileInput.files) {
+                        const item = document.createElement('li');
+                        item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                        item.innerHTML = `
+                            <span><i class="bi bi-file-earmark me-2"></i>${file.name}</span>
+                            <span class="badge bg-secondary">${formatBytes(file.size)}</span>
+                        `;
+                        list.appendChild(item);
+                    }
+                    fileList.appendChild(list);
+                }
+            }
+
+            function formatBytes(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Folder filtering
+            document.querySelectorAll('.folder-item').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    // Update active state
+                    document.querySelectorAll('.folder-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const folderId = this.dataset.folderId;
+                    const folderName = this.textContent.trim().split('\n')[0];
+                    document.getElementById('currentFolderName').innerHTML = `<i class="bi bi-file-earmark me-2"></i>${folderName}`;
+
+                    // Filter table rows
+                    const rows = document.querySelectorAll('#materialsTableBody tr');
+                    rows.forEach(row => {
+                        const rowFolderId = row.dataset.folderId;
+                        if (folderId === '') {
+                            // Show all
+                            row.style.display = '';
+                        } else if (folderId === 'root') {
+                            // Show only root materials
+                            row.style.display = rowFolderId === 'root' ? '' : 'none';
+                        } else {
+                            // Show only materials in selected folder
+                            row.style.display = rowFolderId === folderId ? '' : 'none';
+                        }
+                    });
+                });
+            });
+
+            // Move modal - set material ID
+            document.querySelectorAll('.move-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.getElementById('moveMaterialId').value = this.dataset.materialId;
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,142 @@
+@model SmartClassRoom.Web.Models.ViewModels.Common.PaginationViewModel
+
+@if (Model.TotalPages > 0)
+{
+    <div class="pagination-wrapper">
+        <!-- Showing X-Y of Z items -->
+        <div class="pagination-info">
+            <span class="text-muted">
+                Showing <strong>@Model.StartItemNumber</strong> to <strong>@Model.EndItemNumber</strong> of <strong>@Model.TotalItems</strong> items
+            </span>
+        </div>
+
+        <div class="pagination-controls">
+            <!-- Previous Button -->
+            @if (Model.HasPrevious)
+            {
+                <a asp-action="@Model.ActionName"
+                   asp-controller="@Model.ControllerName"
+                   asp-area="@Model.AreaName"
+                   asp-all-route-data="@Model.RouteValues"
+                   asp-route-page="@(Model.CurrentPage - 1)"
+                   class="pagination-btn pagination-prev"
+                   title="Previous Page">
+                    <i class="bi bi-chevron-left"></i> Previous
+                </a>
+            }
+            else
+            {
+                <span class="pagination-btn pagination-prev disabled">
+                    <i class="bi bi-chevron-left"></i> Previous
+                </span>
+            }
+
+            <!-- Page Numbers (Sliding Window) -->
+            <div class="pagination-pages">
+                @{
+                    var pageRange = Model.GetPageRange(5);
+                    var firstPage = pageRange.First();
+                    var lastPage = pageRange.Last();
+                }
+
+                <!-- First Page (if not in range) -->
+                @if (firstPage > 1)
+                {
+                    <a asp-action="@Model.ActionName"
+                       asp-controller="@Model.ControllerName"
+                       asp-area="@Model.AreaName"
+                       asp-all-route-data="@Model.RouteValues"
+                       asp-route-page="1"
+                       class="pagination-page">
+                        1
+                    </a>
+
+                    @if (firstPage > 2)
+                    {
+                        <span class="pagination-ellipsis">...</span>
+                    }
+                }
+
+                <!-- Page Range -->
+                @foreach (var pageNum in pageRange)
+                {
+                    if (pageNum == Model.CurrentPage)
+                    {
+                        <span class="pagination-page active">@pageNum</span>
+                    }
+                    else
+                    {
+                        <a asp-action="@Model.ActionName"
+                           asp-controller="@Model.ControllerName"
+                           asp-area="@Model.AreaName"
+                           asp-all-route-data="@Model.RouteValues"
+                           asp-route-page="@pageNum"
+                           class="pagination-page">
+                            @pageNum
+                        </a>
+                    }
+                }
+
+                <!-- Last Page (if not in range) -->
+                @if (lastPage < Model.TotalPages)
+                {
+                    @if (lastPage < Model.TotalPages - 1)
+                    {
+                        <span class="pagination-ellipsis">...</span>
+                    }
+
+                    <a asp-action="@Model.ActionName"
+                       asp-controller="@Model.ControllerName"
+                       asp-area="@Model.AreaName"
+                       asp-all-route-data="@Model.RouteValues"
+                       asp-route-page="@Model.TotalPages"
+                       class="pagination-page">
+                        @Model.TotalPages
+                    </a>
+                }
+            </div>
+
+            <!-- Next Button -->
+            @if (Model.HasNext)
+            {
+                <a asp-action="@Model.ActionName"
+                   asp-controller="@Model.ControllerName"
+                   asp-area="@Model.AreaName"
+                   asp-all-route-data="@Model.RouteValues"
+                   asp-route-page="@(Model.CurrentPage + 1)"
+                   class="pagination-btn pagination-next"
+                   title="Next Page">
+                    Next <i class="bi bi-chevron-right"></i>
+                </a>
+            }
+            else
+            {
+                <span class="pagination-btn pagination-next disabled">
+                    Next <i class="bi bi-chevron-right"></i>
+                </span>
+            }
+        </div>
+
+        <!-- Jump to Page -->
+        <div class="pagination-jump">
+            <form method="get" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-area="@Model.AreaName" class="jump-form">
+                @foreach (var routeValue in Model.RouteValues)
+                {
+                    <input type="hidden" name="@routeValue.Key" value="@routeValue.Value" />
+                }
+                <label for="jumpToPage" class="jump-label">Go to:</label>
+                <input type="number"
+                       id="jumpToPage"
+                       name="page"
+                       min="1"
+                       max="@Model.TotalPages"
+                       placeholder="Page"
+                       class="jump-input"
+                       value="@Model.CurrentPage" />
+                <button type="submit" class="jump-btn" title="Go to page">
+                    <i class="bi bi-arrow-right-circle"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+}

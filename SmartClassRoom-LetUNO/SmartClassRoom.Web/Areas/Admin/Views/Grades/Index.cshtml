@@ -1,0 +1,412 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.CourseOffering>
+@using SmartClassRoom.Web.Models.ViewModels.Common
+@using SmartClassRoom.Web.Models.Constants
+@addTagHelper *, SmartClassRoom.Web
+@{
+    ViewData["Title"] = "Grade Management";
+    ViewData["PageTitle"] = "Grade Management";
+    ViewData["PageDescription"] = "Manage grades, configure components, and calculate final grades for all course offerings.";
+    ViewData["PageIcon"] = "award";
+}
+
+@section PageActions {
+    <a asp-action="Templates" class="btn btn-outline-primary">
+        <i class="bi bi-folder"></i> Grade Templates
+    </a>
+}
+
+<!-- Search & Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="filter-form">
+            <!-- Hidden fields to preserve sorting -->
+            <input type="hidden" name="sortBy" value="@ViewBag.CurrentSort" />
+            <input type="hidden" name="ascending" value="@ViewBag.SortAscending" />
+
+            <div class="row g-3">
+                <!-- Search -->
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="search" class="form-control" placeholder="Course code, name, or teacher..." value="@ViewBag.Search" />
+                </div>
+
+                <!-- Term Filter -->
+                <div class="col-md-2">
+                    <label class="form-label">Term</label>
+                    <select name="termId" class="form-select">
+                        <option value="">All Terms</option>
+                        @foreach (var term in ViewBag.Terms as IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Term>)
+                        {
+                            <option value="@term.Id" selected="@(ViewBag.SelectedTermId == term.Id)">@term.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="Active" selected="@(ViewBag.SelectedStatus == "Active")">Active</option>
+                        <option value="Completed" selected="@(ViewBag.SelectedStatus == "Completed")">Completed</option>
+                        <option value="Cancelled" selected="@(ViewBag.SelectedStatus == "Cancelled")">Cancelled</option>
+                        <option value="Upcoming" selected="@(ViewBag.SelectedStatus == "Upcoming")">Upcoming</option>
+                    </select>
+                </div>
+
+                <!-- Components Filter -->
+                <div class="col-md-2">
+                    <label class="form-label">Components</label>
+                    <select name="hasComponents" class="form-select">
+                        <option value="">All</option>
+                        <option value="true" selected="@(ViewBag.SelectedHasComponents == true)">Configured</option>
+                        <option value="false" selected="@(ViewBag.SelectedHasComponents == false)">Not Configured</option>
+                    </select>
+                </div>
+
+                <!-- Filter Button -->
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="bi bi-funnel"></i> Filter
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Grades Table Card -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th asp-sortable-column="Code" asp-column-display="Course Code"></th>
+                            <th asp-sortable-column="Name" asp-column-display="Course Name"></th>
+                            <th asp-sortable-column="Term" asp-column-display="Term"></th>
+                            <th asp-sortable-column="Teacher" asp-column-display="Teacher"></th>
+                            <th asp-sortable-column="Students" asp-column-display="Students"></th>
+                            <th asp-sortable-column="Components" asp-column-display="Components"></th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var offering in Model)
+                        {
+                            var enrolledCount = offering.Enrollments?.Count(e => EnrollmentStatus.IsActive(e.Status)) ?? 0;
+                            var componentCount = offering.GradeComponents?.Count ?? 0;
+                            var hasComponents = componentCount > 0;
+
+                            <tr>
+                                <!-- Course Code -->
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-journal-text text-primary me-2"></i>
+                                        <strong>@offering.Course.Code</strong>
+                                    </div>
+                                </td>
+
+                                <!-- Course Name -->
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;" title="@offering.Course.Name">
+                                        @offering.Course.Name
+                                    </div>
+                                </td>
+
+                                <!-- Term -->
+                                <td>
+                                    <span class="text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i>@offering.Term.Name
+                                    </span>
+                                </td>
+
+                                <!-- Teacher -->
+                                <td>
+                                    <span class="text-muted">
+                                        <i class="bi bi-person-badge me-1"></i>@offering.Teacher.FullName
+                                    </span>
+                                </td>
+
+                                <!-- Students Count -->
+                                <td>
+                                    @if (enrolledCount > 0)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-people me-1"></i>@enrolledCount enrolled
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-people me-1"></i>0 enrolled
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Components -->
+                                <td>
+                                    @if (hasComponents)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-list-check me-1"></i>@componentCount configured
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-exclamation-circle me-1"></i>Not configured
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Status -->
+                                <td>
+                                    @if (offering.Status == "Active")
+                                    {
+                                        <span class="status-badge active">
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        </span>
+                                    }
+                                    else if (offering.Status == "Completed")
+                                    {
+                                        <span class="status-badge">
+                                            <i class="bi bi-check-circle-fill me-1"></i>Completed
+                                        </span>
+                                    }
+                                    else if (offering.Status == "Cancelled")
+                                    {
+                                        <span class="status-badge inactive">
+                                            <i class="bi bi-x-circle me-1"></i>Cancelled
+                                        </span>
+                                    }
+                                    else if (offering.Status == "Upcoming")
+                                    {
+                                        <span class="status-badge">
+                                            <i class="bi bi-clock me-1"></i>Upcoming
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge">@offering.Status</span>
+                                    }
+                                </td>
+
+                                <!-- Actions -->
+                                <td>
+                                    <div class="action-buttons">
+                                        @if (hasComponents)
+                                        {
+                                            <a asp-action="GradeSheet" asp-route-id="@offering.Id"
+                                               class="action-btn success"
+                                               title="Open Grade Sheet">
+                                                <i class="bi bi-table"></i>
+                                            </a>
+                                            <a asp-action="ConfigureComponents" asp-route-id="@offering.Id"
+                                               class="action-btn warning"
+                                               title="Edit Components">
+                                                <i class="bi bi-gear"></i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="ConfigureComponents" asp-route-id="@offering.Id"
+                                               class="action-btn primary"
+                                               title="Configure Components">
+                                                <i class="bi bi-gear-fill"></i>
+                                            </a>
+                                        }
+                                        <a asp-controller="CourseOfferings" asp-action="Details" asp-route-id="@offering.Id"
+                                           class="action-btn info"
+                                           title="View Offering Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (ViewBag.Pagination != null)
+            {
+                @await Html.PartialAsync("_Pagination", ViewBag.Pagination as PaginationViewModel)
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-award"></i>
+                <h4>No Course Offerings Found</h4>
+                <p>No course offerings match your current filter criteria. Try adjusting your filters or create a new course offering.</p>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="CourseOfferings" asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create Course Offering
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .filter-card {
+            border: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .filter-form .form-label {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .users-table {
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .users-table thead {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .users-table th {
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #495057;
+            white-space: nowrap;
+        }
+
+        .users-table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .users-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.25rem;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .action-btn.primary {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background-color: #0b5ed7;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.success {
+            background-color: #198754;
+            color: white;
+        }
+
+        .action-btn.success:hover {
+            background-color: #157347;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.warning {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .action-btn.warning:hover {
+            background-color: #ffca2c;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.info {
+            background-color: #0dcaf0;
+            color: #000;
+        }
+
+        .action-btn.info:hover {
+            background-color: #31d2f2;
+            transform: translateY(-2px);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 6px;
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .status-badge.active {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-badge.inactive {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h4 {
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #adb5bd;
+            margin-bottom: 1.5rem;
+        }
+
+        .text-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+}

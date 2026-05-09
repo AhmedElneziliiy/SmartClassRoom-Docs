@@ -1,0 +1,289 @@
+@model IEnumerable<SmartClassRoom.Web.Models.Entities.Quizzes.Quiz>
+@{
+    ViewData["Title"] = "Quizzes";
+    ViewData["PageTitle"] = "Quizzes";
+    ViewData["PageIcon"] = "question-circle";
+    ViewData["PageDescription"] = "Manage quizzes and assignments";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+@section PageActions {
+    <a asp-area="Admin" asp-controller="Quizzes" asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Create Quiz
+    </a>
+}
+
+<!-- Statistics Cards -->
+<div class="stats-grid mb-4">
+    <!-- Total Quizzes Card -->
+    <div class="stat-card primary">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Total Quizzes</p>
+                <h2 class="stat-card-value">@ViewBag.TotalQuizzes</h2>
+                <p class="stat-card-subtitle">All Created</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-question-circle"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Questions Card -->
+    <div class="stat-card success">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Total Questions</p>
+                <h2 class="stat-card-value">@ViewBag.TotalQuestions</h2>
+                <p class="stat-card-subtitle">Across All Quizzes</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-card-list"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Average Time Limit Card -->
+    <div class="stat-card info">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Avg Time Limit</p>
+                <h2 class="stat-card-value">@ViewBag.AverageTimeLimit</h2>
+                <p class="stat-card-subtitle">Minutes</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-clock"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Assignments Card -->
+    <div class="stat-card warning">
+        <div class="stat-card-header">
+            <div class="stat-card-content">
+                <p class="stat-card-label">Active Assignments</p>
+                <h2 class="stat-card-value">@ViewBag.ActiveAssignments</h2>
+                <p class="stat-card-subtitle">Of @ViewBag.TotalAssignments Total</p>
+            </div>
+            <div class="stat-card-icon">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart me-2"></i>Quizzes by Course
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="quizzesByCourseChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card chart-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart me-2"></i>Quiz Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="quiz-stats-list">
+                    <div class="stat-item">
+                        <div class="stat-item-label">
+                            <i class="bi bi-question-circle text-primary me-2"></i>
+                            Average Questions per Quiz
+                        </div>
+                        <div class="stat-item-value">
+                            @(ViewBag.TotalQuizzes > 0 ? Math.Round((double)ViewBag.TotalQuestions / ViewBag.TotalQuizzes, 1) : 0)
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-item-label">
+                            <i class="bi bi-clock text-info me-2"></i>
+                            Average Time Limit
+                        </div>
+                        <div class="stat-item-value">
+                            @ViewBag.AverageTimeLimit min
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-item-label">
+                            <i class="bi bi-trophy text-warning me-2"></i>
+                            Average Passing Score
+                        </div>
+                        <div class="stat-item-value">
+                            @ViewBag.AveragePassingScore%
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-item-label">
+                            <i class="bi bi-calendar-event text-success me-2"></i>
+                            Assignment Rate
+                        </div>
+                        <div class="stat-item-value">
+                            @(ViewBag.TotalQuizzes > 0 ? Math.Round((double)ViewBag.TotalAssignments / ViewBag.TotalQuizzes, 1) : 0)x
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-light">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-list-ul me-2"></i>Quiz List
+                </h5>
+            </div>
+            <div class="col-md-6">
+                <form asp-action="Index" method="get" class="d-flex justify-content-end">
+                    <select name="courseId" class="form-select form-select-sm me-2" style="max-width: 250px;" onchange="this.form.submit()">
+                        <option value="">All Courses</option>
+                        @foreach (var item in ViewBag.Courses as SelectList)
+                        {
+                            <option value="@item.Value" selected="@(item.Value == ViewBag.SelectedCourseId?.ToString())">@item.Text</option>
+                        }
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No quizzes found. Create your first quiz to get started.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Course</th>
+                            <th>Questions</th>
+                            <th>Time Limit</th>
+                            <th>Passing Score</th>
+                            <th>Created</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var quiz in Model)
+                        {
+                            <tr class="quiz-row">
+                                <td>
+                                    <div class="quiz-title-cell">
+                                        <i class="bi bi-question-circle-fill text-primary me-2"></i>
+                                        <div>
+                                            <strong class="d-block">@quiz.Title</strong>
+                                            @if (!string.IsNullOrEmpty(quiz.Description))
+                                            {
+                                                <small class="text-muted">@quiz.Description.Substring(0, Math.Min(60, quiz.Description.Length))@(quiz.Description.Length > 60 ? "..." : "")</small>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary">
+                                        <i class="bi bi-book me-1"></i>@quiz.Course.Name
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-card-list me-1"></i>@quiz.Questions.Count
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-muted">
+                                        <i class="bi bi-clock me-1"></i>@quiz.TimeLimit min
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="passing-score">
+                                        <span class="badge bg-success">@quiz.PassingScore%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i>@quiz.CreatedAt.ToString("MMM dd, yyyy")
+                                    </small>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-action="Edit" asp-route-id="@quiz.Id" class="btn btn-outline-primary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Assign" asp-route-id="@quiz.Id" class="btn btn-outline-success" title="Assign">
+                                            <i class="bi bi-calendar-plus"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal@(quiz.Id)" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Delete Confirmation Modal -->
+                            <div class="modal fade" id="deleteModal@(quiz.Id)" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Confirm Delete</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Are you sure you want to delete the quiz "<strong>@quiz.Title</strong>"?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <form asp-action="Delete" asp-route-id="@quiz.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Quizzes Charts JavaScript -->
+    <script src="~/js/quizzes-charts.js" asp-append-version="true"></script>
+
+    <script>
+        // Initialize charts with data from ViewBag
+        if (typeof QuizzesCharts !== 'undefined') {
+            var courseData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.QuizzesByCourse));
+            QuizzesCharts.init({
+                quizzesByCourse: courseData
+            });
+        }
+    </script>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/quizzes.css" asp-append-version="true" />
+}

@@ -1,0 +1,461 @@
+@model IEnumerable<SmartClassRoom.Web.Models.ViewModels.Reports.ReportListItemDto>
+@using SmartClassRoom.Web.Models.ViewModels.Common
+@addTagHelper *, SmartClassRoom.Web
+@{
+    ViewData["Title"] = "Reports";
+    ViewData["PageTitle"] = "Reports";
+    ViewData["PageDescription"] = "Generate and export attendance, grade, and enrollment reports.";
+    ViewData["PageIcon"] = "file-earmark-bar-graph";
+}
+
+@section PageActions {
+    <a asp-action="StudentListReport" class="btn btn-primary me-2">
+        <i class="bi bi-people"></i> Student List Report
+    </a>
+    <a asp-action="EnrollmentReport" class="btn btn-outline-primary">
+        <i class="bi bi-clipboard-data"></i> Enrollment Report
+    </a>
+}
+
+<!-- Quick Access Cards for New Reports -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="report-card">
+            <div class="report-card-icon bg-purple">
+                <i class="bi bi-person-badge"></i>
+            </div>
+            <div class="report-card-content">
+                <h6>Student Multi-Course</h6>
+                <p class="text-muted">Attendance across multiple courses for a specific student</p>
+                <a asp-action="StudentMultiCourseAttendanceReport" class="btn btn-sm btn-purple">
+                    <i class="bi bi-file-earmark-bar-graph me-1"></i> Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="report-card">
+            <div class="report-card-icon bg-blue">
+                <i class="bi bi-book"></i>
+            </div>
+            <div class="report-card-content">
+                <h6>Course Student Attendance</h6>
+                <p class="text-muted">Session-by-session attendance for all students in a course</p>
+                <a asp-action="CourseStudentAttendanceReport" class="btn btn-sm btn-blue">
+                    <i class="bi bi-file-earmark-bar-graph me-1"></i> Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="report-card">
+            <div class="report-card-icon bg-orange">
+                <i class="bi bi-person-workspace"></i>
+            </div>
+            <div class="report-card-content">
+                <h6>Teacher Attendance</h6>
+                <p class="text-muted">Track teacher attendance and punctuality for sessions</p>
+                <a asp-action="TeacherAttendanceReport" class="btn btn-sm btn-orange">
+                    <i class="bi bi-file-earmark-bar-graph me-1"></i> Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="report-card">
+            <div class="report-card-icon bg-teal">
+                <i class="bi bi-building"></i>
+            </div>
+            <div class="report-card-content">
+                <h6>Department Summary</h6>
+                <p class="text-muted">High-level attendance overview across all departments</p>
+                <a asp-action="DepartmentAttendanceSummaryReport" class="btn btn-sm btn-teal">
+                    <i class="bi bi-file-earmark-bar-graph me-1"></i> Generate Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="filter-form">
+            <input type="hidden" name="sortBy" value="@ViewBag.CurrentSort" />
+            <input type="hidden" name="ascending" value="@ViewBag.SortAscending" />
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Term</label>
+                    <select name="termId" class="form-select">
+                        <option value="">All Terms</option>
+                        @foreach (var term in ViewBag.Terms as IEnumerable<SmartClassRoom.Web.Models.Entities.Academic.Term>)
+                        {
+                            <option value="@term.Id" selected="@(ViewBag.SelectedTermId == term.Id)">@term.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Report Type</label>
+                    <select name="reportType" class="form-select">
+                        <option value="">All Types</option>
+                        <option value="Attendance" selected="@(ViewBag.SelectedReportType == "Attendance")">Attendance</option>
+                        <option value="Grade" selected="@(ViewBag.SelectedReportType == "Grade")">Grade</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="bi bi-funnel"></i> Filter
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reports Table Card -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th asp-sortable-column="Course" asp-column-display="Course Code"></th>
+                            <th>Course Title</th>
+                            <th asp-sortable-column="Term" asp-column-display="Term"></th>
+                            <th asp-sortable-column="Type" asp-column-display="Report Type"></th>
+                            <th>Students</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var report in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                                        <strong>@report.CourseCode</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 250px;" title="@report.Title">
+                                        @report.Title
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-muted">
+                                        <i class="bi bi-calendar3 me-1"></i>@report.TermName
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (report.Type == "Attendance")
+                                    {
+                                        <span class="badge bg-primary">
+                                            <i class="bi bi-calendar-check me-1"></i>Attendance
+                                        </span>
+                                    }
+                                    else if (report.Type == "Grade")
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-award me-1"></i>Grade
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-info text-dark">
+                                        <i class="bi bi-people me-1"></i>@report.RecordCount students
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        @if (report.Type == "Attendance")
+                                        {
+                                            <a asp-action="AttendanceReport" asp-route-id="@report.Id"
+                                               class="action-btn info"
+                                               title="View Attendance Report">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="GenerateAttendancePdf" asp-route-courseOfferingId="@report.Id"
+                                               class="action-btn danger"
+                                               title="Download PDF">
+                                                <i class="bi bi-file-pdf"></i>
+                                            </a>
+                                            <a asp-action="GenerateAttendanceExcel" asp-route-courseOfferingId="@report.Id"
+                                               class="action-btn success"
+                                               title="Download Excel">
+                                                <i class="bi bi-file-excel"></i>
+                                            </a>
+                                        }
+                                        else if (report.Type == "Grade")
+                                        {
+                                            <a asp-action="GradeReport" asp-route-id="@report.Id"
+                                               class="action-btn info"
+                                               title="View Grade Report">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="GenerateGradePdf" asp-route-courseOfferingId="@report.Id"
+                                               class="action-btn danger"
+                                               title="Download PDF">
+                                                <i class="bi bi-file-pdf"></i>
+                                            </a>
+                                            <a asp-action="GenerateGradeExcel" asp-route-courseOfferingId="@report.Id"
+                                               class="action-btn success"
+                                               title="Download Excel">
+                                                <i class="bi bi-file-excel"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (ViewBag.Pagination != null)
+            {
+                @await Html.PartialAsync("_Pagination", ViewBag.Pagination as PaginationViewModel)
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <h4>No Reports Found</h4>
+                <p>No reports match your current filter criteria. Try adjusting your filters or create course offerings with grade components.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .report-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .report-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .report-card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .report-card-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .report-card-content h6 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        .report-card-content p {
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            min-height: 40px;
+        }
+
+        .bg-purple {
+            background-color: #6f42c1 !important;
+        }
+
+        .bg-blue {
+            background-color: #0d6efd !important;
+        }
+
+        .bg-orange {
+            background-color: #fd7e14 !important;
+        }
+
+        .bg-teal {
+            background-color: #20c997 !important;
+        }
+
+        .btn-purple {
+            background-color: #6f42c1;
+            color: white;
+            border: none;
+        }
+
+        .btn-purple:hover {
+            background-color: #5a32a3;
+            color: white;
+        }
+
+        .btn-blue {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+        }
+
+        .btn-blue:hover {
+            background-color: #0b5ed7;
+            color: white;
+        }
+
+        .btn-orange {
+            background-color: #fd7e14;
+            color: white;
+            border: none;
+        }
+
+        .btn-orange:hover {
+            background-color: #dc6502;
+            color: white;
+        }
+
+        .btn-teal {
+            background-color: #20c997;
+            color: white;
+            border: none;
+        }
+
+        .btn-teal:hover {
+            background-color: #1aa179;
+            color: white;
+        }
+
+        .filter-card {
+            border: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .filter-form .form-label {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .users-table {
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .users-table thead {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .users-table th {
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #495057;
+            white-space: nowrap;
+        }
+
+        .users-table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .users-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.25rem;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .action-btn.info {
+            background-color: #0dcaf0;
+            color: #000;
+        }
+
+        .action-btn.info:hover {
+            background-color: #31d2f2;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .action-btn.danger:hover {
+            background-color: #bb2d3b;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.success {
+            background-color: #198754;
+            color: white;
+        }
+
+        .action-btn.success:hover {
+            background-color: #157347;
+            transform: translateY(-2px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h4 {
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: #adb5bd;
+            margin-bottom: 1.5rem;
+        }
+
+        .text-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+}

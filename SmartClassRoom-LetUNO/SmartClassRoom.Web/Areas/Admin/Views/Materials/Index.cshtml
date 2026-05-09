@@ -1,0 +1,145 @@
+@model IEnumerable<CourseOfferingMaterialsViewModel>
+@using SmartClassRoom.Web.Services.Interfaces
+
+@{
+    ViewData["Title"] = "Materials";
+    ViewData["PageTitle"] = "Course Materials";
+    ViewData["PageIcon"] = "folder";
+    ViewData["PageDescription"] = "Manage course materials and documents";
+    Layout = "~/Views/Shared/_AdminLayoutWithSidebar.cshtml";
+}
+
+<!-- Filter Card -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="termId" class="form-label">Term</label>
+                <select name="termId" id="termId" class="form-select">
+                    <option value="">All Terms</option>
+                    @foreach (var term in ViewBag.Terms as SelectList)
+                    {
+                        <option value="@term.Value" selected="@(term.Value == ViewBag.SelectedTermId?.ToString())">
+                            @term.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="departmentId" class="form-label">Department</label>
+                <select name="departmentId" id="departmentId" class="form-select">
+                    <option value="">All Departments</option>
+                    @foreach (var dept in ViewBag.Departments as SelectList)
+                    {
+                        <option value="@dept.Value" selected="@(dept.Value == ViewBag.SelectedDepartmentId?.ToString())">
+                            @dept.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Course Offerings Table -->
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Teacher</th>
+                            <th>Term</th>
+                            <th>Section</th>
+                            <th class="text-center">Materials</th>
+                            <th class="text-center">Total Size</th>
+                            <th>Last Upload</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var offering in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@offering.CourseCode</strong>
+                                    <br />
+                                    <small class="text-muted">@offering.CourseName</small>
+                                </td>
+                                <td>@offering.TeacherName</td>
+                                <td>
+                                    <span class="badge bg-secondary">@offering.TermName</span>
+                                </td>
+                                <td>@(offering.SectionName ?? "-")</td>
+                                <td class="text-center">
+                                    @if (offering.TotalMaterials > 0)
+                                    {
+                                        <span class="badge bg-primary">
+                                            <i class="bi bi-file-earmark"></i> @offering.TotalMaterials
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (offering.TotalSize > 0)
+                                    {
+                                        <span class="badge bg-info">@offering.FormattedTotalSize</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (offering.LastUploadDate.HasValue)
+                                    {
+                                        <small>@offering.LastUploadDate.Value.ToString("MMM dd, yyyy")</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a asp-action="Manage" asp-route-id="@offering.CourseOfferingId"
+                                           class="action-btn primary" title="Manage Materials">
+                                            <i class="bi bi-folder-plus"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-folder-x"></i>
+                <h3>No Course Offerings Found</h3>
+                <p>There are no course offerings matching your criteria, or no course offerings exist yet.</p>
+                <a asp-area="Admin" asp-controller="CourseOfferings" asp-action="Index" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Go to Course Offerings
+                </a>
+            </div>
+        }
+    </div>
+</div>
